@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <title>Museums Explorer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="https://unpkg.com/htmx.org@1.6.1"></script>
+
+    <!-- Favicons -->
+    <link rel="apple-touch-icon" sizes="57x57" href="/static/favicons/apple-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="/static/favicons/apple-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="/static/favicons/apple-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="/static/favicons/apple-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="/static/favicons/apple-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="/static/favicons/apple-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="/static/favicons/apple-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/static/favicons/apple-icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/favicons/apple-icon-180x180.png">
+    <link rel="icon" type="image/png" sizes="192x192"  href="/static/favicons/android-icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="/static/favicons/favicon-96x96.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/favicons/favicon-16x16.png">
+    <link rel="manifest" href="/static/favicons/manifest.json">
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="msapplication-TileImage" content="/static/favicons/ms-icon-144x144.png">
+    <meta name="theme-color" content="#ffffff">
+
+</head>
+<body>
+    <div class="container" data-total-museums="{{ museums|length }}">
+        <!-- Header -->
+        <h1>Europe’s Top 50 Art Museums Explorer</h1>
+        <p>Ready to collect cultural checkmarks? Spot it, click it, and make it yours! Use our search and filters to navigate easily</p>        
+
+        <!-- Search and filter controls -->
+        <div class="filter-controls">
+            <input type="text" id="search-bar" class="filter-input" placeholder="Search by museum name...">
+            <select id="country-filter" class="filter-input">
+                <option value="">All Countries</option>
+                {% for country in countries %}
+                    <option value="{{ country }}">{{ country }}</option>
+                {% endfor %}
+            </select>
+            <a href="#" id="reset-filters" class="reset-link">Reset Filters</a> 
+        </div>        
+        <!-- Progress bar -->
+        <div id="progress-bar-container">
+            <div id="progress-bar"></div>
+        </div>
+
+         <!-- Placeholder for no results message -->
+        <div id="no-results" class="no-results" style="display: none;">
+            <p>No museums found. Try adjusting the filters or search terms</p>
+        </div>
+
+         <!-- Museums list -->
+        <ul class="museum-list">
+            {% for museum in museums %}
+                <li class="museum-item" data-id="{{ museum.id }}" data-name="{{ museum.name | lower }}" data-country="{{ museum.country }}">
+                    <img src="{{ url_for('static', filename='images/' + museum.image) }}" alt="{{ museum.name }}" class="museum-image" loading="lazy">
+                    <p class="museum-name">{{ museum.name }}</p>
+                    <p class="museum-city">{{ museum.city }}</p> 
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2024 Museums Explorer. All rights reserved</p>
+        <p>Built with love by Amateur Art Connoisseur </p>
+    </footer>
+    
+</body>
+</html>

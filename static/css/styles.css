@@ -1,0 +1,258 @@
+/* === Layout & Structure === */
+body {
+    background-color: #111111;
+    color: #ffffff;
+    font-family: "Roboto Mono", monospace;
+    margin: 0;
+    padding: 20px;
+    line-height: 1.6;
+}
+
+h1 {
+    color: #ffffff;
+    font-size: calc(1.5rem + 1vw);
+    margin-bottom: 20px;
+    text-align: center;
+    font-family: "Roboto Mono", monospace;
+}
+
+p {
+    color: #b3b3b3;
+    font-size: 1rem;
+    margin-top: 0;
+    text-align: center;
+}
+
+.footer {
+    text-align: center;
+    color: #b3b3b3;
+    font-size: 10px;
+    padding: 20px;
+    background-color: #111111;
+    border-top: 1px solid #333;
+}
+
+/* === Reusable Components === */
+button {
+    background-color: #0070f3;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+button:hover {
+    background-color: #005bb5;
+}
+
+.reset-link {
+    color: #b3b3b3;
+    font-size: 12px;
+    text-decoration: none;
+    margin-left: 10px;
+    cursor: pointer;
+}
+
+.reset-link:hover {
+    text-decoration: underline;
+}
+
+.progress-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #b3b3b3;
+    font-size: 12px;
+    text-align: center;
+    pointer-events: none;
+}
+
+/* === Filter Controls === */
+.filter-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    background-color: #111111;
+    padding: 12px 24px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+}
+
+.filter-input {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    background-color: #1a1a1a;
+    color: #b3b3b3;
+    outline: none;
+    transition: background-color 0.2s;
+}
+
+.filter-input:focus {
+    background-color: #2a2a2a;
+}
+
+#search-bar {
+    width: 350px;
+}
+
+.no-results {
+    color: #b3b3b3;
+    font-size: 14px;
+    text-align: center;
+    margin-top: 20px;
+    display: none;
+}
+
+.no-results p {
+    margin: 0;
+    padding: 10px;
+}
+
+/* === Progress Bar === */
+#progress-bar-container {
+    display: flex;
+    align-items: center;
+    background-color: #1a1a1a;
+    border-radius: 10px;
+    padding: 5px 10px;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+#progress-bar {
+    height: 20px;
+    background-color: #00e676;
+    border-radius: 5px;
+    transition: width 0.3s;
+    width: 0;
+}
+
+/* === Museum List & Items === */
+.museum-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    list-style-type: none;
+    padding: 0;
+    margin: 0 auto;
+    margin-bottom: 40px;
+}
+
+.museum-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #1a1a1a;
+    padding: 15px;
+    border-radius: 10px;
+    transition: transform 0.2s, background-color 0.2s;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.museum-item:hover {
+    transform: translateY(-5px);
+    background-color: #2a2a2a;
+}
+
+.museum-item.visited {
+    animation: pulse 1s;
+    background-color: #777777;
+    color: #ffffff;
+    transition: background-color 0.3s, transform 0.3s;
+}
+
+.museum-image {
+    width: 120px;
+    height: 120px;
+    border-radius: 8px;
+    object-fit: cover;
+    cursor: pointer;
+    margin-bottom: 10px;
+}
+
+.museum-name {
+    font-weight: bold;
+    text-align: center;
+    font-size: 16px;
+    color: #ffffff;
+    margin: 0;
+}
+
+.museum-city {
+    font-weight: normal;
+    text-align: center;
+    font-size: 12px;
+    color: #b3b3b3;
+    margin: 0;
+}
+
+/* === Footer Styling === */
+.footer-links a {
+    color: #00e676;
+    text-decoration: none;
+    margin: 0 5px;
+}
+
+.footer-links a:hover {
+    text-decoration: underline;
+}
+
+/* === Animations === */
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 10px 20px rgba(0, 230, 118, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(0, 230, 118, 0);
+    }
+}
+
+/* === Media Queries === */
+/* For small screens (mobile devices, typically under 600px wide) */
+@media (max-width: 600px) {
+    .museum-list {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .museum-item {
+        width: 100%;
+    }
+
+    #search-bar {
+        width: 100%;
+    }
+
+    .filter-controls {
+        flex-direction: column;
+        gap: 15px;
+    }
+}
+
+/* For medium screens (tablets) */
+@media (max-width: 900px) {
+    .museum-list {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    #search-bar {
+        width: 80%;
+    }
+}
+
+/* For large screens (desktops) */
+@media (min-width: 901px) {
+    .museum-list {
+        grid-template-columns: repeat(5, 1fr);
+    }
+}
