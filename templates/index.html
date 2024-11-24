@@ -32,7 +32,7 @@
     <div class="container" data-total-museums="{{ museums|length }}">
         <!-- Header -->
         <h1>Europe’s Top 50 Art Museums Explorer</h1>
-        <p>Ready to collect cultural checkmarks? Spot it, click it, and make it yours! Use our search and filters to navigate easily</p>        
+        <p>Ready to collect cultural checkmarks? Spot it, click it, and make it yours! Use our search and filters to navigate easily</p>
 
         <!-- Search and filter controls -->
         <div class="filter-controls">
@@ -43,8 +43,8 @@
                     <option value="{{ country }}">{{ country }}</option>
                 {% endfor %}
             </select>
-            <a href="#" id="reset-filters" class="reset-link">Reset Filters</a> 
-        </div>        
+            <a href="#" id="reset-filters" class="reset-link">Reset Filters</a>
+        </div>
         <!-- Progress bar -->
         <div id="progress-bar-container">
             <div id="progress-bar"></div>
@@ -61,7 +61,7 @@
                 <li class="museum-item" data-id="{{ museum.id }}" data-name="{{ museum.name | lower }}" data-country="{{ museum.country }}">
                     <img src="{{ url_for('static', filename='images/' + museum.image) }}" alt="{{ museum.name }}" class="museum-image" loading="lazy">
                     <p class="museum-name">{{ museum.name }}</p>
-                    <p class="museum-city">{{ museum.city }}</p> 
+                    <p class="museum-city">{{ museum.city }}</p>
                 </li>
             {% endfor %}
         </ul>
@@ -73,6 +73,6 @@
         <p>&copy; 2024 Museums Explorer. All rights reserved</p>
         <p>Built with love by Amateur Art Connoisseur </p>
     </footer>
-    
+
 </body>
 </html>

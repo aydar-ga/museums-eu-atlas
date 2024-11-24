@@ -6,3 +6,15 @@ run:
 
 test:
 	pytest
+
+lint:
+	flake8 .
+
+format:
+	black .
+
+type-check:
+	mypy app.py
+
+pre-commit-check:
+	pre-commit run --all-files
