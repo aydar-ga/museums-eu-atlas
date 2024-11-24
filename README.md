@@ -4,14 +4,14 @@
 
 This project is licensed under a Proprietary License. All rights are reserved, and you must obtain permission to use, distribute, or modify this software.
 
-## Current status ✔️
+## Current Status ✔️
 
 The app allows you to:
 
 - Mark museums as visited and track your progress.
 - Search by museum name and filter by country.
 
-## Planned enhancements 🏁
+## Planned Enhancements 🏁
 
 I'm planning to implement these changes:
 
@@ -19,7 +19,7 @@ I'm planning to implement these changes:
 - See museums you visited.
 - Some more exciting stuff!
 
-## Technical setup 🤖
+## Technical Setup 🤖
 
 - Python (Flask) + JavaScript/HTMX
 - GitHub Actions
