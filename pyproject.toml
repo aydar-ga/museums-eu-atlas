@@ -12,7 +12,6 @@ python = "^3.12"
 flask = "^3.1.0"
 gunicorn = "^23.0.0"
 
-
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.3"
 flake8 = "^7.1.1"
