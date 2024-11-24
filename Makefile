@@ -1,21 +1,20 @@
 install:
-	pip install -r requirements.txt
+	poetry install
 
 run:
-	python app.py
+	poetry run python app.py
 
 test:
-	pytest
+	poetry run pytest
 
 lint:
-	flake8 .
+	poetry run flake8 .
 
 format:
-	black .
+	poetry run black .
 
 type-check:
-	mypy app.py
+	poetry run mypy app.py
 
 pre-commit-check:
-	pre-commit run --all-files
-	git add . || true
+	poetry run pre-commit run --all-files

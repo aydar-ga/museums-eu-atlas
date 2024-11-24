@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "museums-tracker"
+version = "1.0.0"
+description = "App for art & museum lovers"
+authors = ["Aydar Gazizullin <aydarcyber@gmail.com>"]
+license = "Proprietary"
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.12"
+flask = "^3.1.0"
+gunicorn = "^23.0.0"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.3"
+flake8 = "^7.1.1"
+black = "^24.10.0"
+mypy = "^1.13.0"
+pre-commit = "^4.0.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
