@@ -18,3 +18,4 @@ type-check:
 
 pre-commit-check:
 	pre-commit run --all-files
+	git add . || true
