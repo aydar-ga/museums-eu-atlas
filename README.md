@@ -6,6 +6,8 @@ This project is licensed under a Proprietary License. All rights are reserved, a
 
 ## Current status ✔️
 
+The app allows you to:
+
 - Mark museums as visited and track your progress.
 - Search by museum name and filter by country.
 
@@ -13,8 +15,8 @@ This project is licensed under a Proprietary License. All rights are reserved, a
 
 I'm planning to implement these changes:
 
-- Get a personal account
-- See museums you visited
+- Get a personal account.
+- See museums you visited.
 - Some more exciting stuff!
 
 ## Technical setup 🤖
