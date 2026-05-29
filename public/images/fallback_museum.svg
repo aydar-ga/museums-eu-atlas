@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 440" role="img" aria-labelledby="title desc">
+  <title id="title">Museum image fallback</title>
+  <desc id="desc">A simple museum facade placeholder used when a local image is missing.</desc>
+  <rect width="640" height="440" fill="#1a1a1a"/>
+  <rect x="96" y="168" width="448" height="188" fill="#222222" stroke="#333333" stroke-width="4"/>
+  <path d="M72 168h496L320 74 72 168z" fill="#c7bda8"/>
+  <rect x="128" y="204" width="48" height="118" fill="#111111"/>
+  <rect x="224" y="204" width="48" height="118" fill="#111111"/>
+  <rect x="320" y="204" width="48" height="118" fill="#111111"/>
+  <rect x="416" y="204" width="48" height="118" fill="#111111"/>
+  <rect x="92" y="356" width="456" height="24" fill="#d33f35"/>
+  <text x="320" y="410" text-anchor="middle" fill="#b3b3b3" font-family="monospace" font-size="22">Image unavailable</text>
+</svg>

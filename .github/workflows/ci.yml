@@ -1,0 +1,121 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "24"
+  # Keep in sync with the resolved @playwright/test version in package-lock.json.
+  PLAYWRIGHT_VERSION: "1.60.0"
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Static analysis
+  # ---------------------------------------------------------------------------
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+  # ---------------------------------------------------------------------------
+  # Production build validation
+  # ---------------------------------------------------------------------------
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Next.js application
+        run: npm run build
+
+  # ---------------------------------------------------------------------------
+  # Unit and component tests (Vitest)
+  # ---------------------------------------------------------------------------
+  unit-tests:
+    name: Unit & component tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Vitest suite
+        run: npm run test
+
+  # ---------------------------------------------------------------------------
+  # Browser end-to-end tests (Playwright)
+  # ---------------------------------------------------------------------------
+  e2e:
+    name: End-to-end tests
+    runs-on: ubuntu-latest
+    needs:
+      - build
+    timeout-minutes: 15
+    container:
+      image: ${{ format('mcr.microsoft.com/playwright:v{0}-noble', env.PLAYWRIGHT_VERSION) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Playwright tests
+        run: npm run test:e2e -- --project=chromium --project=mobile
+        env:
+          CI: true
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            reports/e2e.xml
+            test-results/
+          retention-days: 7

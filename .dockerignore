@@ -1,6 +1,11 @@
-venv/
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-poetry.lock
+.git/
+node_modules/
+.next/
+reports/
+coverage/
+test-results/
+playwright-report/
+.env
+.env.local
+.DS_Store
+*.tsbuildinfo

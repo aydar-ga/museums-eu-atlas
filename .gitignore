@@ -1,7 +1,17 @@
-venv/
-*.pyc
-__pycache__/
-.env
+node_modules/
+.next/
+out/
+frontend/dist/
 
-# Virtual environment created by Poetry
-.venv
+.env
+.env.local
+.env.*.local
+.DS_Store
+
+reports/
+coverage/
+test-results/
+playwright-report/
+var/
+*.tsbuildinfo
+.vercel
