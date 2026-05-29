@@ -4,7 +4,10 @@ import { drizzle } from "drizzle-orm/neon-http";
 import * as schema from "./schema";
 
 export function getDatabaseUrl(): string | null {
-  const url = process.env.DATABASE_URL?.trim();
+  const url =
+    process.env.DATABASE_URL?.trim() ||
+    process.env.POSTGRES_URL?.trim() ||
+    process.env.POSTGRES_PRISMA_URL?.trim();
   return url ? url : null;
 }
 

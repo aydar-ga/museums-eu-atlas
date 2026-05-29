@@ -29,7 +29,7 @@ npm run dev -- -H 127.0.0.1 -p 5010
 Supported variables:
 
 - `APP_PORT` - local Playwright/dev port, default `5001`.
-- `DATABASE_URL` - Neon Postgres connection string for Drizzle account persistence.
+- `DATABASE_URL` or Vercel-provisioned `POSTGRES_URL` - Neon Postgres connection string for Drizzle account persistence.
 - `AUTH_SECRET` - signs magic-link tokens; required for shared deployments.
 - `PUBLIC_APP_URL` - optional absolute URL for generated magic links.
 - `RESEND_API_KEY` - optional email delivery.
@@ -42,12 +42,20 @@ Without Resend settings, the magic-link endpoint returns a dev link in the UI.
 
 ## Database
 
-1. Create a Neon project and copy the pooled or direct Postgres connection string into `DATABASE_URL`.
+### Local
+
+1. Create a Neon project and copy the Postgres connection string into `DATABASE_URL` or `POSTGRES_URL`.
 2. Apply the schema:
 
 ```bash
 npm run db:migrate
 ```
+
+### Vercel Marketplace Neon
+
+1. Import the repo in Vercel.
+2. Connect Neon from **Storage** in the project dashboard.
+3. Redeploy. Build-time migrations run automatically when `POSTGRES_URL` is present.
 
 Useful commands:
 

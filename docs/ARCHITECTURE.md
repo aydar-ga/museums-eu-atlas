@@ -45,7 +45,7 @@ Light/dark mode is stored under `museumsEuAtlasTheme`; the bootstrap script appl
 
 Auth is passwordless and intentionally minimal. The route handler signs a time-limited token with `AUTH_SECRET`; local development also supports browser-generated dev tokens so the app remains easy to run without email credentials.
 
-When `DATABASE_URL` points at Neon Postgres, successful magic-link verification upserts a row in the `users` table through Drizzle. The browser session email still lives in `localStorage`; visit progress is not synced to the database yet.
+When `DATABASE_URL` or Vercel-provisioned `POSTGRES_URL` points at Neon Postgres, successful magic-link verification upserts a row in the `users` table through Drizzle. The browser session email still lives in `localStorage`; visit progress is not synced to the database yet.
 
 This is not a full identity platform. No OAuth, MFA, account deletion, or visit sync exists yet.
 
@@ -63,6 +63,8 @@ npm run db:migrate   # apply SQL migrations
 npm run db:generate  # regenerate migration files after schema edits
 npm run db:studio    # inspect data locally
 ```
+
+On Vercel, `npm run build` runs `scripts/migrate-if-configured.mjs` first. When Neon is connected through Vercel Marketplace, migrations apply automatically using the injected `POSTGRES_URL`.
 
 ## Images
 

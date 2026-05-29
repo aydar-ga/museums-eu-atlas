@@ -14,13 +14,21 @@
 - Added Vitest unit/component tests and Playwright e2e tests.
 - Updated README, docs, Claude/Codex guides, CI, and Makefile for npm/Next.
 - Deployed the migrated Next.js app to Vercel from the local CLI.
+- Prepared Vercel Marketplace Neon integration: build-time migrations, `POSTGRES_URL`/`DATABASE_URL` support, and zero-manual-schema deploy flow.
 
 ## Near-Term Next Iteration
 
 - Add visual regression screenshots for both themes and card states.
 - Add real email delivery credentials in Vercel project settings.
-- Wire Neon `DATABASE_URL` in Vercel project settings and run `npm run db:migrate`.
 - Consider Next Image after confirming image optimization costs and behavior on Vercel.
+
+## Future Product Vision (New Project Direction)
+
+These items are intentionally scoped as a separate product evolution, not part of the current compact atlas MVP:
+
+1. **Modern sci-fi AI SaaS visual language** — dynamic hero and UI motion similar to contemporary AI products. Example: rotate the headline qualifier (`Top` → `must-see` → `must-watch` → other curated variants) with smooth transitions and ambient background elements.
+2. **Logged-in product features** — business and product capabilities beyond anonymous/local browsing: saved routes, trip planning, collections, preferences, notifications, and account-level settings.
+3. **AI museum guides** — assistant experiences such as personalized visit plans, highlight explainers, route suggestions, and conversational museum guidance grounded in the curated dataset.
 
 ## Deferred
 

@@ -60,29 +60,31 @@ Run against an already running app:
 APP_BASE_URL=http://127.0.0.1:5001 npm run test:e2e
 ```
 
-## Vercel
+## Vercel + Neon (zero manual DB wiring)
 
-Current live deployment from the previous deployment iteration:
+Repository: **https://github.com/aydar-ga/museums-eu-atlas**
 
-- https://museums-tracker.vercel.app
+1. In Vercel, import the GitHub repo `aydar-ga/museums-eu-atlas`.
+2. Open the project → **Storage** → **Connect Database** → choose **Neon**.
+3. Add `AUTH_SECRET` in Project Settings → Environment Variables (Production + Preview).
+4. Deploy. Vercel injects `POSTGRES_URL`; the build runs Drizzle migrations automatically before `next build`.
 
-Deploy with the linked Vercel project:
+No local `DATABASE_URL` copy/paste is required when Neon is connected through Vercel Marketplace.
+
+Optional CLI deploy after linking:
 
 ```bash
-vercel deploy . -y
+vercel link
+vercel integration add neon
+vercel env add AUTH_SECRET
+vercel deploy --prod
 ```
 
-Explicit production deploy:
-
-```bash
-vercel deploy . --prod -y
-```
-
-Environment variables are documented in `.env.example`. Set `AUTH_SECRET` before any shared deployment. Add `DATABASE_URL` for Neon-backed account persistence, then run `npm run db:migrate`. Add `PUBLIC_APP_URL`, `RESEND_API_KEY`, and `AUTH_EMAIL_FROM` when real email delivery is desired.
+Environment variables are documented in `.env.example`. Add `PUBLIC_APP_URL`, `RESEND_API_KEY`, and `AUTH_EMAIL_FROM` when real email delivery is desired.
 
 ## Architecture
 
-The project intentionally uses Next.js App Router now because deployment to Vercel and TypeScript-first engineering are explicit requirements. Museum visit progress remains browser-local; magic-link auth creates a local browser session and upserts the account in Neon when `DATABASE_URL` is configured.
+The project intentionally uses Next.js App Router now because deployment to Vercel and TypeScript-first engineering are explicit requirements. Museum visit progress remains browser-local; magic-link auth creates a local browser session and upserts the account in Neon when Vercel injects `POSTGRES_URL` or `DATABASE_URL`.
 
 Read these first:
 
