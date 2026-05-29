@@ -1,14 +1,11 @@
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 
+import { getDatabaseUrlFromEnv } from "@/lib/vercel-build";
 import * as schema from "./schema";
 
 export function getDatabaseUrl(): string | null {
-  const url =
-    process.env.DATABASE_URL?.trim() ||
-    process.env.POSTGRES_URL?.trim() ||
-    process.env.POSTGRES_PRISMA_URL?.trim();
-  return url ? url : null;
+  return getDatabaseUrlFromEnv(process.env);
 }
 
 export function getDb() {

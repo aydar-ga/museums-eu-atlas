@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "next dev -H 127.0.0.1 -p ${APP_PORT:-5001}",
     "build": "node scripts/migrate-if-configured.mjs && next build",
+    "build:app": "next build",
+    "vercel-build": "node scripts/vercel-build.mjs",
     "start": "next start -H 127.0.0.1 -p ${APP_PORT:-5001}",
     "lint": "eslint .",
     "test": "vitest run --config vitest.config.ts",
