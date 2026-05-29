@@ -30,7 +30,19 @@ Why:
 - It fits Vercel route handlers and optional email delivery.
 - It keeps browsing open before sign-in.
 
-Known limitation: no durable server-side account database exists yet. The current session is local to the browser.
+Known limitation: visit progress is still local to the browser. Account rows persist in Neon when `DATABASE_URL` is configured.
+
+## Add Neon Postgres With Drizzle
+
+Decision: persist magic-link accounts in Neon Postgres through Drizzle ORM.
+
+Why:
+
+- The product now needs durable account rows without introducing a second backend service.
+- Neon fits Vercel/serverless deployment and works with the Neon HTTP driver.
+- Drizzle keeps schema, migrations, and TypeScript types in-repo.
+
+Known limitation: museum visit progress is still intentionally local-only until cross-device sync is scoped.
 
 ## Keep Visit Progress Local
 
