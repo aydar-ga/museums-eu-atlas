@@ -9,6 +9,7 @@ async function stabilizePage(page: import("@playwright/test").Page) {
         animation: none !important;
         transition: none !important;
         caret-color: transparent !important;
+        font-family: Arial, Helvetica, sans-serif !important;
       }
     `
   });

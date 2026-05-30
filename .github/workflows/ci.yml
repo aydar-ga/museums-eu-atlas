@@ -11,10 +11,25 @@ concurrency:
 
 env:
   NODE_VERSION: "24"
-  # Keep in sync with the resolved @playwright/test version in package-lock.json.
+  # Keep in sync with package-lock.json and the literal Playwright container image below.
   PLAYWRIGHT_VERSION: "1.60.0"
 
 jobs:
+  # ---------------------------------------------------------------------------
+  # Workflow syntax validation
+  # ---------------------------------------------------------------------------
+  workflow-lint:
+    name: Workflow lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Run actionlint
+        run: |
+          bash <(curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          ./actionlint
+
   # ---------------------------------------------------------------------------
   # Static analysis
   # ---------------------------------------------------------------------------
@@ -91,7 +106,7 @@ jobs:
       - build
     timeout-minutes: 15
     container:
-      image: ${{ format('mcr.microsoft.com/playwright:v{0}-noble', env.PLAYWRIGHT_VERSION) }}
+      image: mcr.microsoft.com/playwright:v1.60.0-noble
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5

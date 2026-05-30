@@ -60,9 +60,12 @@ npm run test:e2e
 
 GitHub Actions runs four independent jobs on pull requests and pushes to `main`:
 
+0. **Workflow lint** — actionlint validates `.github/workflows/ci.yml` before any job runs.
 1. **Lint** — ESLint static analysis.
 2. **Build** — `next build` production validation.
 3. **Unit & component tests** — Vitest (`npm run test`).
-4. **End-to-end tests** — Playwright in the official `mcr.microsoft.com/playwright` image; runs after build succeeds. Browsers are preinstalled in the container, so CI does not call `playwright install`.
+4. **End-to-end tests** — Playwright in the official `mcr.microsoft.com/playwright:v1.60.0-noble` image; runs after build succeeds. Browsers are preinstalled in the container, so CI does not call `playwright install`.
+
+The Playwright container image tag in `.github/workflows/ci.yml` must stay a literal string. GitHub Actions does not allow the `env` context in `container.image`.
 
 Workflow file: `.github/workflows/ci.yml`.

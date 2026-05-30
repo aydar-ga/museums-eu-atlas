@@ -12,6 +12,7 @@ reports/
 coverage/
 test-results/
 playwright-report/
+actionlint
 var/
 *.tsbuildinfo
 .vercel
