@@ -32,3 +32,16 @@ export type MagicLinkResponse = {
   magicLink: string;
   delivery: "email" | "dev";
 };
+
+export type VerifyLinkResponse = {
+  email: string;
+  sessionToken?: string;
+};
+
+export type SavedRoute = {
+  id: string;
+  name: string;
+  museumSlugs: string[];
+  createdAt: string;
+  updatedAt: string;
+};

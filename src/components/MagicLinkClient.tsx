@@ -1,16 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 import { verifyMagicLink } from "@/lib/auth";
-import { writeUserEmail, authChangedEvent } from "@/lib/storage";
+import { ensureDevSession } from "@/lib/progress-sync";
+import { writeUserEmail, writeSessionToken, authChangedEvent, progressChangedEvent } from "@/lib/storage";
 
 export function MagicLinkClient() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState("");
+  const redirectStartedRef = useRef(false);
   const token = searchParams.get("token") ?? "";
 
   useEffect(() => {
@@ -18,13 +19,23 @@ export function MagicLinkClient() {
       setError("Magic link token is missing.");
       return;
     }
+    if (redirectStartedRef.current) {
+      return;
+    }
     let mounted = true;
     verifyMagicLink(token)
-      .then((email) => {
+      .then(async ({ email, sessionToken }) => {
         writeUserEmail(email);
+        if (sessionToken) {
+          writeSessionToken(sessionToken);
+        } else {
+          await ensureDevSession(email);
+        }
         window.dispatchEvent(new Event(authChangedEvent));
-        if (mounted) {
-          router.replace("/account");
+        window.dispatchEvent(new Event(progressChangedEvent));
+        if (mounted && !redirectStartedRef.current) {
+          redirectStartedRef.current = true;
+          window.location.replace("/account");
         }
       })
       .catch((requestError: Error) => {
@@ -35,7 +46,7 @@ export function MagicLinkClient() {
     return () => {
       mounted = false;
     };
-  }, [router, token]);
+  }, [token]);
 
   return (
     <section className="auth-shell auth-shell-panel" data-testid="magic-link-page">

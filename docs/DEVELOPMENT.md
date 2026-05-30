@@ -18,6 +18,8 @@ Open `http://127.0.0.1:5001/`.
 
 Port `5001` remains the default because macOS often reserves `5000`.
 
+`npm run dev` uses Next's webpack dev backend. The current Turbopack dev server can panic while serving the account route, so webpack is the stable local workflow for now.
+
 Override the local port:
 
 ```bash

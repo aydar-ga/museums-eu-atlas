@@ -16,11 +16,12 @@ The active stack is Next.js App Router, React, TypeScript, static CSS, local ima
 4. `src/data/museums.ts` and `src/data/museums.generated.ts` - validated museum dataset and filters.
 5. `src/components/HomePage.tsx` - discovery UX, filters, progress, localStorage visits.
 6. `src/components/MuseumCard.tsx` - museum card contract; keep visual treatment stable.
-7. `src/components/AuthFlow.tsx` and `src/app/api/auth/*` - magic-link auth flow.
+7. `src/components/AuthFlow.tsx`, `src/components/AccountPanel.tsx`, and `src/app/api/auth/*` - magic-link auth flow, local account panel, and sign-out location.
 8. `src/db/` and `src/server/users.ts` - Neon/Drizzle account persistence on sign-in.
 9. `src/app/globals.css` - visual language, RU-style cards, light/dark themes, responsive behavior.
-10. `docs/DECISIONS.md` - why the stack and tooling look this way.
-11. `docs/ROADMAP.md` - what is intentionally deferred.
+11. `docs/DECISIONS.md` - why the stack and tooling look this way.
+12. `docs/OPERATIONS.md` - monitoring and rollback policy.
+13. `docs/ROADMAP.md` - what is intentionally deferred.
 
 ## Repository Structure
 

@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev -H 127.0.0.1 -p ${APP_PORT:-5001}",
+    "dev": "next dev --webpack -H 127.0.0.1 -p ${APP_PORT:-5001}",
     "build": "node scripts/migrate-if-configured.mjs && next build",
     "build:app": "next build",
     "vercel-build": "node scripts/vercel-build.mjs",

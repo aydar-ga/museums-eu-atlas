@@ -848,35 +848,35 @@ export const museums = [
     ]
   },
   {
-    "slug": "pushkin-museum",
-    "name": "Pushkin Museum",
-    "city": "Moscow",
-    "country": "Russia",
+    "slug": "museum-of-fine-arts-budapest",
+    "name": "Museum of Fine Arts Budapest",
+    "city": "Budapest",
+    "country": "Hungary",
     "category": "Fine Art",
     "themes": [
-      "World art",
-      "Antiquities",
-      "Impressionism"
+      "Old masters",
+      "European painting",
+      "Egyptian art"
     ],
     "popularityTier": "Major European classics",
     "familyFriendly": true,
     "hasOnlineCollection": true,
-    "summary": "The Pushkin Museum is Moscow's major world art museum, with antiquities, European painting, casts, education, and major exhibition programs.",
-    "whyVisit": "It adds an important eastern European perspective to the list, connecting Moscow to ancient, European, and modern art histories.",
+    "summary": "The Museum of Fine Arts Budapest is Hungary's flagship fine-art museum on Heroes' Square, with Old Masters, Egyptian antiquities, and major European painting collections.",
+    "whyVisit": "It is Central Europe's strongest encyclopedic fine-art stop, connecting Budapest to Raphael, El Greco, Dutch Golden Age painting, and Egyptian sculpture in one classical museum building.",
     "highlights": [
-      "Main building on Volkhonka",
-      "Impressionist and Post-Impressionist works",
-      "Ancient and Egyptian collections"
+      "Heroes' Square facade",
+      "Old Master galleries",
+      "Egyptian collection"
     ],
-    "officialUrl": "https://pushkinmuseum.art/",
-    "onlineUrl": "https://pushkinmuseum.art/museum/collections/",
-    "image": "pushkin.jpg",
-    "imageAlt": "Main building of the Pushkin Museum in Moscow",
-    "imageCredit": "Ghirlandajo, Wikimedia Commons, CC BY-SA 3.0",
+    "officialUrl": "https://www.szepmuveszeti.hu/en/",
+    "onlineUrl": "https://www.szepmuveszeti.hu/en/collection/",
+    "image": "museum_of_fine_arts_budapest.jpg",
+    "imageAlt": "Museum of Fine Arts Budapest on Heroes' Square",
+    "imageCredit": "Wizzard, Wikimedia Commons, Public domain",
     "sourceUrls": [
-      "https://pushkinmuseum.art/",
-      "https://pushkinmuseum.art/museum/collections/",
-      "https://commons.wikimedia.org/wiki/File:Gmii.jpg"
+      "https://www.szepmuveszeti.hu/en/",
+      "https://www.szepmuveszeti.hu/en/collection/",
+      "https://commons.wikimedia.org/wiki/File:Museum_of_Fine_Arts,_Budapest_2006-11-04_026.jpg"
     ]
   },
   {
@@ -976,35 +976,35 @@ export const museums = [
     ]
   },
   {
-    "slug": "hermitage-museum",
-    "name": "Hermitage Museum",
-    "city": "Saint Petersburg",
-    "country": "Russia",
-    "category": "Museum Complex",
+    "slug": "acropolis-museum",
+    "name": "Acropolis Museum",
+    "city": "Athens",
+    "country": "Greece",
+    "category": "Archaeology and Antiquities",
     "themes": [
-      "Imperial palace",
-      "World art",
-      "Antiquities"
+      "Ancient Greece",
+      "Parthenon",
+      "Classical sculpture"
     ],
     "popularityTier": "Global icons",
     "familyFriendly": true,
     "hasOnlineCollection": true,
-    "summary": "The Hermitage is a vast museum complex centered on the Winter Palace, with major collections of European art, antiquities, and world cultures.",
-    "whyVisit": "It shows the museum as palace, encyclopedia, and imperial collection at once, making it one of Europe's defining cultural landmarks.",
+    "summary": "The Acropolis Museum presents the archaeological story of the Acropolis in a purpose-built museum with direct views of the Parthenon and major classical sculpture.",
+    "whyVisit": "It is one of Europe's essential ancient-art experiences, linking the Parthenon marbles, votive sculpture, and daily life on the sacred rock in a single must-see visit.",
     "highlights": [
-      "Winter Palace",
-      "Rembrandt and Titian",
-      "Antiquities and palace interiors"
+      "Parthenon Gallery",
+      "Caryatids",
+      "Glass floor over ancient ruins"
     ],
-    "officialUrl": "https://www.hermitagemuseum.org/",
-    "onlineUrl": "https://collections.hermitagemuseum.org/",
-    "image": "hermitage_museum.jpg",
-    "imageAlt": "Winter Palace facade of the Hermitage Museum in Saint Petersburg",
-    "imageCredit": "Florstein, Wikimedia Commons, CC BY-SA 4.0",
+    "officialUrl": "https://www.theacropolismuseum.gr/en",
+    "onlineUrl": "https://www.theacropolismuseum.gr/en/exhibitions",
+    "image": "acropolis_museum.jpg",
+    "imageAlt": "Acropolis Museum building in Athens",
+    "imageCredit": "philip.mallis, Wikimedia Commons, CC BY-SA 2.0",
     "sourceUrls": [
-      "https://www.hermitagemuseum.org/",
-      "https://collections.hermitagemuseum.org/",
-      "https://commons.wikimedia.org/wiki/File:Winter_Palace_Panorama_4.jpg"
+      "https://www.theacropolismuseum.gr/en",
+      "https://www.theacropolismuseum.gr/en/exhibitions",
+      "https://commons.wikimedia.org/wiki/File:New_Acropolis_Museum_building_in_Athens,_Greece.jpg"
     ]
   },
   {

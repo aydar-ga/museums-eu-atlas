@@ -25,6 +25,8 @@ describe("museum dataset", () => {
     expect(getMuseum("mauritshuis")?.city).toBe("The Hague");
     expect(getMuseum("thyssen-bornemisza-museum")?.name).toBe("Museo Nacional Thyssen-Bornemisza");
     expect(getMuseum("nationalmuseum-stockholm")?.name).toBe("Nationalmuseum");
+    expect(getMuseum("acropolis-museum")?.country).toBe("Greece");
+    expect(getMuseum("museum-of-fine-arts-budapest")?.country).toBe("Hungary");
   });
 
   it("derives filter options", () => {

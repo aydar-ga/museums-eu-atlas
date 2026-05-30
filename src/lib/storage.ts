@@ -3,8 +3,10 @@ const plannedStorageKey = "plannedMuseums";
 const migrationKey = `${visitedStorageKey}:slugMigrationComplete`;
 const milestonesKey = `${visitedStorageKey}:announcedMilestones`;
 const userKey = "museumsEuAtlasUser";
+const sessionKey = "museumsEuAtlasSession";
 
 export const authChangedEvent = "museumsEuAtlasAuthChanged";
+export const progressChangedEvent = "museumsEuAtlasProgressChanged";
 
 export function readStringArray(key: string): string[] {
   if (typeof window === "undefined") {
@@ -98,9 +100,24 @@ export function writeUserEmail(email: string): void {
   localStorage.setItem(userKey, JSON.stringify({ email }));
 }
 
+export function readSessionToken(): string | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  return localStorage.getItem(sessionKey);
+}
+
+export function writeSessionToken(token: string): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+  localStorage.setItem(sessionKey, token);
+}
+
 export function clearUser(): void {
   if (typeof window === "undefined") {
     return;
   }
   localStorage.removeItem(userKey);
+  localStorage.removeItem(sessionKey);
 }

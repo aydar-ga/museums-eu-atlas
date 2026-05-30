@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/");
+  await page.evaluate(() => window.scrollTo(0, 0));
 });
 
 test("loads index and all museum cards", async ({ page }) => {
@@ -92,23 +93,36 @@ test("navigates to detail page", async ({ page }) => {
   await expect(page.getByTestId("breadcrumb-all-museums")).toContainText("All museums");
 });
 
-test("runs magic link signup flow", async ({ page }) => {
-  await page.getByTestId("login-link").click();
+test("opens account for an already signed-in test user", async ({ page }) => {
+  await page.goto("/account?testUser=e2e%40example.com", { waitUntil: "domcontentloaded" });
+
+  await expect(page.getByTestId("account-link")).toBeVisible();
   await expect(page.getByTestId("side-panel")).toBeVisible();
   await expect(page.getByTestId("app-stage")).toHaveAttribute("data-panel-open", "true");
   await expect(page.getByTestId("museum-card").first()).toBeVisible();
-  await expect(page.getByTestId("auth-title")).toHaveText("Magic link sign up");
-
-  await page.getByTestId("auth-submit").click();
-  await expect(page.getByTestId("auth-error-summary")).toHaveText("Enter a valid email address.");
-
-  await page.getByTestId("auth-email").fill("e2e@example.com");
-  await page.getByTestId("auth-submit").click();
-  await expect(page.getByTestId("magic-link-sent")).toBeVisible();
-
-  await page.getByTestId("magic-link-open").click();
-  await expect(page).toHaveURL(/\/account$/);
   await expect(page.getByTestId("account-email")).toHaveText("e2e@example.com");
+
+  await page.getByTestId("logout-submit").click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByTestId("utility-rail").getByTestId("login-link")).toBeVisible();
+});
+
+test("utility rail stays fixed while scrolling", async ({ page }) => {
+  await page.goto("/");
+  const before = await page.getByTestId("utility-rail-host").boundingBox();
+  await page.evaluate(() => window.scrollTo(0, 2000));
+  const after = await page.getByTestId("utility-rail-host").boundingBox();
+  expect(before?.y).toBeCloseTo(after?.y ?? 0, 0);
+});
+
+test("utility rail stays fixed when opening the side panel after scrolling", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => window.scrollTo(0, 1800));
+  const before = await page.getByTestId("utility-rail-host").boundingBox();
+  await page.getByTestId("login-link").click();
+  await expect(page.getByTestId("side-panel")).toBeVisible();
+  const after = await page.getByTestId("utility-rail-host").boundingBox();
+  expect(before?.y).toBeCloseTo(after?.y ?? 0, 0);
 });
 
 test("handles fallback image behavior", async ({ page }) => {

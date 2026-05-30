@@ -23,7 +23,8 @@ Important examples:
 - Tate Modern: https://www.tate.org.uk/visit/tate-modern
 - Centre Pompidou: https://www.centrepompidou.fr/en/
 - Guggenheim Museum Bilbao: https://www.guggenheim-bilbao.eus/en
-- Hermitage Museum: https://www.hermitagemuseum.org/
+- Acropolis Museum: https://www.theacropolismuseum.gr/en
+- Museum of Fine Arts Budapest: https://www.szepmuveszeti.hu/en/
 - Mauritshuis: https://www.mauritshuis.nl/en/
 
 ## Image Methodology
@@ -60,11 +61,11 @@ For missing or broken images, the app uses `public/images/fallback_museum.svg`.
 | `old_masters.jpg` | https://commons.wikimedia.org/wiki/File:Dresden_Zwinger_Gemaeldegalerie.jpg | Kolossos, Wikimedia Commons, CC BY-SA 3.0 |
 | `museu_calouste_gulbenkian.jpg` | https://commons.wikimedia.org/wiki/File:Museu_Calouste_Gulbenkian_(32124426136).jpg | Pedro Ribeiro Simoes, Wikimedia Commons, CC BY 2.0 |
 | `guggenheim_bilbao.jpg` | https://commons.wikimedia.org/wiki/File:Guggenheim-bilbao-jan05.jpg | MykReeve, Wikimedia Commons, CC BY-SA 3.0 |
-| `pushkin.jpg` | https://commons.wikimedia.org/wiki/File:Gmii.jpg | Ghirlandajo, Wikimedia Commons, CC BY-SA 3.0 |
+| `museum_of_fine_arts_budapest.jpg` | https://commons.wikimedia.org/wiki/File:Museum_of_Fine_Arts,_Budapest_2006-11-04_026.jpg | Wizzard, Wikimedia Commons, Public domain |
 | `munch.jpg` | https://commons.wikimedia.org/wiki/File:Munch_Museum_Oslo_2021.jpg | Helge Høifødt, Wikimedia Commons, CC BY-SA 4.0 |
 | `royal_museums_belgium.jpg` | https://commons.wikimedia.org/wiki/File:Royal_Museums_of_Fine_Arts_of_Belgium.jpg | EmDee, Wikimedia Commons, CC BY-SA 4.0 |
 | `kunsthaus_zurich.jpg` | https://commons.wikimedia.org/wiki/File:Kunsthaus_Zuerich_2011-09-11_15-17-30.jpg | Roland zh, Wikimedia Commons, CC BY-SA 3.0 |
-| `hermitage_museum.jpg` | https://commons.wikimedia.org/wiki/File:Winter_Palace_Panorama_4.jpg | Florstein, Wikimedia Commons, CC BY-SA 4.0 |
+| `acropolis_museum.jpg` | https://commons.wikimedia.org/wiki/File:New_Acropolis_Museum_building_in_Athens,_Greece.jpg | philip.mallis, Wikimedia Commons, CC BY-SA 2.0 |
 | `leopold.jpg` | https://commons.wikimedia.org/wiki/File:Leopold_Museum_Vienna.jpg | Thomas Ledl, Wikimedia Commons, CC BY-SA 4.0 |
 | `glyptotek.jpg` | https://commons.wikimedia.org/wiki/File:Ny_Carlsberg_Glyptotek_Winter_Garden.jpg | Thue, Wikimedia Commons, CC BY-SA 4.0 |
 | `monet.jpg` | https://commons.wikimedia.org/wiki/File:Musee_Marmottan_Monet_Paris.jpg | Moonik, Wikimedia Commons, CC BY-SA 3.0 |

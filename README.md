@@ -9,6 +9,7 @@ English-language Next.js app for discovering and tracking visits to 50 major Eur
 - Local planned/visit progress, milestone feedback, and legacy numeric-id localStorage migration.
 - Light/dark mode with header icon controls, system preference fallback, and persisted local preference.
 - Magic-link signup/sign-in using Next route handlers. In local/dev mode the link is shown directly; with `RESEND_API_KEY` and `AUTH_EMAIL_FROM`, the API can send email.
+- Signed-in users open account actions from the header account icon; sign-out lives inside the account panel.
 - Detail pages with reasons to visit, highlights, official links, online collections, source links, and image credits.
 - Local image files only, plus an SVG fallback for missing images.
 - npm-based tooling, ESLint, TypeScript build checks, Vitest unit/component tests, and Playwright e2e tests.
@@ -22,6 +23,8 @@ npm run dev
 ```
 
 Open `http://127.0.0.1:5001/`.
+
+Local dev runs Next's webpack dev backend because the current Turbopack dev server can panic on the account route in this project.
 
 To use another port:
 
@@ -59,6 +62,8 @@ Run against an already running app:
 ```bash
 APP_BASE_URL=http://127.0.0.1:5001 npm run test:e2e
 ```
+
+The account e2e path uses `/account?testUser=e2e@example.com` in development so the suite can verify the signed-in UI without depending on email delivery.
 
 ## Vercel + Neon (zero manual DB wiring)
 

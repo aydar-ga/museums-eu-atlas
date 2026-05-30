@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { verifyMagicToken } from "@/server/magicTokens";
+import { createSessionToken } from "@/server/sessions";
 import { recordUserSignIn } from "@/server/users";
 
 export async function POST(request: NextRequest) {
@@ -9,7 +10,8 @@ export async function POST(request: NextRequest) {
     const token = typeof body.token === "string" ? body.token : "";
     const email = verifyMagicToken(token);
     await recordUserSignIn(email);
-    return NextResponse.json({ email });
+    const sessionToken = createSessionToken(email);
+    return NextResponse.json({ email, sessionToken });
   } catch (error) {
     return NextResponse.json(
       {
