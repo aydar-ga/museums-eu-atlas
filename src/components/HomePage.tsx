@@ -11,12 +11,16 @@ import {
 } from "../data/museums";
 import {
   migrateLegacyVisited,
+  progressChangedEvent,
   readAnnouncedMilestones,
   readPlanned,
+  readSessionToken,
+  readVisited,
   writeAnnouncedMilestones,
   writePlanned,
   writeVisited
 } from "../lib/storage";
+import { syncProgressToServer } from "../lib/progress-sync";
 
 const milestoneCopy: Record<number, string> = {
   1: "First museum marked. Your route has started.",
@@ -49,6 +53,15 @@ export function HomePage() {
     setPlannedMuseums(readPlanned());
     setAnnouncedMilestones(readAnnouncedMilestones());
   }, [slugsByLegacyId]);
+
+  useEffect(() => {
+    const refreshLocalProgress = () => {
+      setVisitedMuseums(readVisited());
+      setPlannedMuseums(readPlanned());
+    };
+    window.addEventListener(progressChangedEvent, refreshLocalProgress);
+    return () => window.removeEventListener(progressChangedEvent, refreshLocalProgress);
+  }, []);
 
   const visibleMuseums = useMemo(() => {
     const normalizedSearch = search.toLocaleLowerCase("en-US").trim();
@@ -85,6 +98,14 @@ export function HomePage() {
     setVisitedOnly(false);
   }
 
+  function persistProgress(nextPlanned: Set<string>, nextVisited: Set<string>) {
+    writePlanned(nextPlanned);
+    writeVisited(nextVisited);
+    if (readSessionToken()) {
+      void syncProgressToServer(nextPlanned, nextVisited);
+    }
+  }
+
   function togglePlanned(slug: string) {
     const next = new Set(plannedMuseums);
     if (next.has(slug)) {
@@ -93,7 +114,7 @@ export function HomePage() {
       next.add(slug);
     }
     setPlannedMuseums(next);
-    writePlanned(next);
+    persistProgress(next, visitedMuseums);
   }
 
   function toggleVisited(slug: string) {
@@ -105,7 +126,7 @@ export function HomePage() {
       next.delete(slug);
     }
     setVisitedMuseums(next);
-    writeVisited(next);
+    persistProgress(plannedMuseums, next);
 
     const nextVisitedCount = museums.filter((museum) => next.has(museum.slug)).length;
     const milestone = milestoneCopy[nextVisitedCount];

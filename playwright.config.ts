@@ -14,6 +14,13 @@ export default defineConfig({
   reporter: process.env.CI
     ? [["github"], ["junit", { outputFile: "reports/e2e.xml" }]]
     : [["list"]],
+  expect: {
+    toHaveScreenshot: {
+      animations: "disabled",
+      maxDiffPixelRatio: 0.02,
+      pathTemplate: "{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}{ext}"
+    }
+  },
   use: {
     baseURL,
     trace: "retain-on-failure",
@@ -22,6 +29,12 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
+      testIgnore: /visual\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"] }
+    },
+    {
+      name: "visual",
+      testMatch: /visual\.spec\.ts/,
       use: { ...devices["Desktop Chrome"] }
     },
     {

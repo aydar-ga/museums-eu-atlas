@@ -30,7 +30,35 @@ Why:
 - It fits Vercel route handlers and optional email delivery.
 - It keeps browsing open before sign-in.
 
-Known limitation: visit progress is still local to the browser. Account rows persist in Neon when `DATABASE_URL` is configured.
+Known limitation: OAuth and account deletion are still deferred.
+
+## Sync Museum Progress For Signed-In Users
+
+Decision: store planned/visited museum slugs in Neon for authenticated users while keeping `localStorage` as the live UI cache.
+
+Why:
+
+- Signed-in users expect progress to survive browser changes when a database is connected.
+- The merge-on-sign-in flow preserves anonymous progress and upgrades it after magic-link verification.
+- Session tokens reuse the existing `AUTH_SECRET` signing model without introducing cookies.
+
+## Saved Trip Routes
+
+Decision: add a first logged-in feature beyond auth: named routes saved from the current planned museum list.
+
+Why:
+
+- It is the smallest useful trip-planning step before richer map/export work.
+- It reuses the same authenticated API/session pattern as progress sync.
+
+## Utility Rail Host
+
+Decision: render sign-in and theme controls inside a viewport-fixed host portaled to `document.body`.
+
+Why:
+
+- Controls must stay pinned while the museum grid scrolls.
+- Portaling avoids invalid `documentElement` children and scroll-lock side effects from `position: fixed` body locking.
 
 ## Add Neon Postgres With Drizzle
 
@@ -43,6 +71,16 @@ Why:
 - Drizzle keeps schema, migrations, and TypeScript types in-repo.
 
 Known limitation: museum visit progress is still intentionally local-only until cross-device sync is scoped.
+
+## Use Webpack For Local Dev
+
+Decision: run `next dev` with `--webpack` locally.
+
+Why:
+
+- The current Turbopack dev backend can panic on the account route in this project.
+- The production `next build` path remains unchanged.
+- The stable local workflow matters more than Turbopack-specific dev speed here.
 
 ## Keep Visit Progress Local
 

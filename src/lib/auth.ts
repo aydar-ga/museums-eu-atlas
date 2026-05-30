@@ -1,4 +1,4 @@
-import type { MagicLinkResponse } from "../types";
+import type { MagicLinkResponse, VerifyLinkResponse } from "../types";
 
 const devTokenPrefix = "dev.";
 
@@ -63,7 +63,7 @@ export async function requestMagicLink(email: string): Promise<MagicLinkResponse
   };
 }
 
-export async function verifyMagicLink(token: string): Promise<string> {
+export async function verifyMagicLink(token: string): Promise<VerifyLinkResponse> {
   try {
     const response = await fetch("/api/auth/verify-link", {
       method: "POST",
@@ -71,11 +71,10 @@ export async function verifyMagicLink(token: string): Promise<string> {
       body: JSON.stringify({ token })
     });
     if (response.ok) {
-      const body = (await response.json()) as { email: string };
-      return body.email;
+      return (await response.json()) as VerifyLinkResponse;
     }
   } catch {
     // Local test fallback for environments where the route handler is unavailable.
   }
-  return consumeDevMagicToken(token);
+  return { email: consumeDevMagicToken(token) };
 }

@@ -37,7 +37,15 @@ Run against an already running app:
 APP_BASE_URL=http://127.0.0.1:5001 npm run test:e2e
 ```
 
-Covered browser behavior includes index load, search/country/category filters, planned-only and visited-only filters, light/dark switching, localStorage visit persistence, legacy id migration, milestone message, detail navigation, magic-link signup, account page, image fallback, favicon/manifest head tags, and responsive layout checks across phone, tablet, and desktop widths.
+Covered browser behavior includes index load, search/country/category filters, planned-only and visited-only filters, light/dark switching, localStorage visit persistence, legacy id migration, milestone message, detail navigation, already signed-in account state, saved routes panel, fixed utility rail on scroll, image fallback, favicon/manifest head tags, responsive layout checks across phone, tablet, and desktop widths, and Playwright screenshot regression for hero, utility rail, account panel, and card states.
+
+Visual regression snapshots live in `tests/e2e/visual.spec.ts-snapshots/`. Update them intentionally with:
+
+```bash
+npm run test:e2e -- --project=visual --update-snapshots
+```
+
+The account e2e opens `/account?testUser=e2e@example.com` and skips the magic-link roundtrip. That shortcut is ignored in production builds. Magic-link form behavior remains covered by component tests, and token verification is covered below the browser layer.
 
 ## Full Local Check
 
