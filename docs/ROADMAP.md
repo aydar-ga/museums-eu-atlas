@@ -38,6 +38,7 @@ These items are intentionally scoped as a separate product evolution, not part o
 2. **Logged-in product features** — business and product capabilities beyond anonymous/local browsing: saved routes/trip planning (initial version shipped), collections, preferences, notifications, and account-level settings.
 3. **AI museum guides** — assistant experiences such as personalized visit plans, highlight explainers, route suggestions, and conversational museum guidance grounded in the curated dataset.
 4. **Personal scratch-off Europe map** — generate a printable or shareable map from the user's planned and visited museum choices. Start from predefined visual templates (e.g. dark gold scratch-off poster, minimal atlas, travel-journal styles), plot selected museums on a Europe map, and use scratch-off layers for planned vs visited progress. Inspired by premium travel scratch maps such as [Europe Art Travel scratch maps](https://www.etsy.com/de/listing/1478021081/europe-art-travel-scratch-map-52-museen) and curated art-travel products like [Artlas](https://www.artlas.art/en).
+5. **Rebrand to ArtMuse** — domain `artmuse.app` chosen on 2026-05-30; brand voice, monetisation tiers and gamification ideas (scratch reveal, rarity, collections, XP) are archived in [`BRANDING.md`](BRANDING.md) with the open questions that block them.
 
 ## Deferred
 
