@@ -25,7 +25,7 @@ Pages:
 
 Route handlers:
 
-- `POST /api/auth/request-link` creates a signed magic-link token. It sends via Resend when `RESEND_API_KEY` and `AUTH_EMAIL_FROM` exist; otherwise it returns a dev link.
+- `POST /api/auth/request-link` creates a signed magic-link token. It sends via Resend when `RESEND_API_KEY` and `AUTH_EMAIL_FROM` exist and then returns only `{ email, delivery: "email" }`; the link never comes back in the response. Without a provider it returns the link inline (`delivery: "dev"`). The link origin is `PUBLIC_APP_URL`, else the request URL; the client `Origin` header is never used.
 - `POST /api/auth/verify-link` verifies a signed token, upserts the account in Neon when configured, and returns a signed session token.
 - `POST /api/auth/dev-session` (non-production only) creates a signed session token for local/e2e shortcuts.
 - `GET /api/progress` and `PUT /api/progress` read/write signed-in planned and visited museum slugs in Neon.

@@ -36,17 +36,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
   }
 
-  const origin =
-    process.env.PUBLIC_APP_URL ||
-    request.headers.get("origin") ||
-    new URL(request.url).origin;
+  // Never build the link from the client-supplied Origin header: an attacker could
+  // request a link for someone else's address and point the emailed token at their host.
+  const origin = process.env.PUBLIC_APP_URL?.trim().replace(/\/+$/, "") || request.nextUrl.origin;
   const token = createMagicToken(email);
   const magicLink = `${origin}/magic-link?token=${encodeURIComponent(token)}`;
   const sent = await sendWithResend(email, magicLink);
 
+  if (sent) {
+    // The link proves ownership of the inbox, so it must only travel by email.
+    return NextResponse.json({ email, delivery: "email" });
+  }
+
   return NextResponse.json({
     email,
     magicLink,
-    delivery: sent ? "email" : "dev"
+    delivery: "dev"
   });
 }

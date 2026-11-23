@@ -18,7 +18,7 @@ export function AuthFlow() {
     try {
       const response = await requestMagicLink(email);
       setSentEmail(response.email);
-      setMagicLink(response.magicLink);
+      setMagicLink(response.magicLink ?? "");
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Could not create a magic link.");
     } finally {
@@ -35,11 +35,20 @@ export function AuthFlow() {
 
       {sentEmail ? (
         <div className="auth-success" data-testid="magic-link-sent" aria-live="polite">
-          <h2>Check your magic link</h2>
-          <p>Magic link prepared for {sentEmail}.</p>
-          <a className="primary-link" href={magicLink} data-testid="magic-link-open">
-            Open magic link
-          </a>
+          {magicLink ? (
+            <>
+              <h2>Check your magic link</h2>
+              <p>Magic link prepared for {sentEmail}.</p>
+              <a className="primary-link" href={magicLink} data-testid="magic-link-open">
+                Open magic link
+              </a>
+            </>
+          ) : (
+            <>
+              <h2>Check your inbox</h2>
+              <p>We emailed a sign-in link to {sentEmail}. It expires in 10 minutes.</p>
+            </>
+          )}
           <button
             type="button"
             className="secondary-link"
