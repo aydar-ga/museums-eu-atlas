@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { getDb } from "@/db";
 import { createMagicToken, isValidEmail } from "@/server/magicTokens";
+import {
+  checkRateLimits,
+  clientIp,
+  rateLimitKey,
+  rateLimitStoreFor,
+  requestLinkLimitPerEmail,
+  requestLinkLimitPerIp,
+  requestLinkWindowMs
+} from "@/server/rateLimit";
 import { isProductionDeployment } from "@/server/secret";
 
 const emailUnavailableMessage =
@@ -26,8 +36,9 @@ async function sendWithResend(email: string, magicLink: string): Promise<boolean
     body: JSON.stringify({
       from,
       to: email,
-      subject: "Your Museums EU Atlas magic link",
-      html: `<p>Open your Museums EU Atlas magic link:</p><p><a href="${magicLink}">${magicLink}</a></p><p>This link expires in 10 minutes.</p>`
+      subject: "Your ArtMuse sign-in link",
+      text: `Sign in to ArtMuse: ${magicLink}\n\nThe link expires in 10 minutes. If you did not ask for it, ignore this email.`,
+      html: `<p>Here is your ArtMuse sign-in link:</p><p><a href="${magicLink}">Sign in to ArtMuse</a></p><p>The link expires in 10 minutes. If you did not ask for it, ignore this email.</p>`
     })
   });
 
@@ -48,6 +59,28 @@ export async function POST(request: NextRequest) {
   // would let anyone sign in as any address. Without an email provider, refuse.
   if (isProductionDeployment() && !emailDeliveryConfigured()) {
     return NextResponse.json({ error: emailUnavailableMessage }, { status: 503 });
+  }
+
+  let limit;
+  try {
+    limit = await checkRateLimits(
+      rateLimitStoreFor(getDb()),
+      [
+        { key: rateLimitKey("email", email), limit: requestLinkLimitPerEmail, windowMs: requestLinkWindowMs },
+        { key: rateLimitKey("ip", clientIp(request.headers)), limit: requestLinkLimitPerIp, windowMs: requestLinkWindowMs }
+      ],
+      Date.now()
+    );
+  } catch {
+    // Without a working counter we cannot bound email sends, so refuse rather than fail open.
+    return NextResponse.json({ error: "Sign-in is temporarily unavailable." }, { status: 503 });
+  }
+  if (!limit.allowed) {
+    const minutes = Math.ceil(limit.retryAfterSeconds / 60);
+    return NextResponse.json(
+      { error: `Too many sign-in requests. Try again in ${minutes} minute${minutes === 1 ? "" : "s"}.` },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
+    );
   }
 
   // Never build the link from the client-supplied Origin header: an attacker could

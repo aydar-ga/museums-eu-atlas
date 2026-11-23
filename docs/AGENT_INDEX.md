@@ -23,6 +23,7 @@ The active stack is Next.js App Router, React, TypeScript, static CSS, local ima
 12. `docs/OPERATIONS.md` - monitoring and rollback policy.
 13. `docs/ROADMAP.md` - what is intentionally deferred.
 14. `docs/BRANDING.md` - chosen name and domain (ArtMuse, `artmuse.app`) and archived brand, monetisation and UX ideas; not implemented yet.
+15. `docs/owner-actions.md` - open to-dos only the owner can do (dashboards, accounts, decisions). Add to it when you hit one.
 
 ## Repository Structure
 

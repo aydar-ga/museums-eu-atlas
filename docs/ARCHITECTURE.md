@@ -25,7 +25,7 @@ Pages:
 
 Route handlers:
 
-- `POST /api/auth/request-link` creates a signed magic-link token. With `RESEND_API_KEY` and `AUTH_EMAIL_FROM` it emails the link and returns only `{ email, delivery: "email" }`. Without a provider it returns the link inline (`delivery: "dev"`) everywhere except the Vercel production deployment (`VERCEL_ENV=production`), where it answers 503 "Email sign-in isn't available yet" so the link can never reach anyone but the inbox owner. The link origin is `PUBLIC_APP_URL`, else the request URL; the client `Origin` header is never used.
+- `POST /api/auth/request-link` creates a signed magic-link token. With `RESEND_API_KEY` and `AUTH_EMAIL_FROM` it emails the link and returns only `{ email, delivery: "email" }`. Without a provider it returns the link inline (`delivery: "dev"`) everywhere except the Vercel production deployment (`VERCEL_ENV=production`), where it answers 503 "Email sign-in isn't available yet" so the link can never reach anyone but the inbox owner. The link origin is `PUBLIC_APP_URL`, else the request URL; the client `Origin` header is never used. Requests are limited to 5 per email and 20 per client IP per 15 minutes (429 with `Retry-After`); counters live in `auth_rate_limits` when a database is configured, else in process memory. If the counter cannot be updated the route answers 503 rather than sending unbounded email.
 - `POST /api/auth/verify-link` verifies a signed token, upserts the account in Neon when configured, and returns a signed session token.
 - `POST /api/auth/dev-session` (non-production only) creates a signed session token for local/e2e shortcuts.
 - `GET /api/progress` and `PUT /api/progress` read/write signed-in planned and visited museum slugs in Neon.
@@ -43,6 +43,7 @@ Neon tables:
 - `users` — magic-link account rows
 - `user_museum_progress` — per-user planned/visited museum slugs
 - `saved_routes` — named trip routes containing museum slug arrays
+- `auth_rate_limits` — fixed-window counters for magic-link requests, keyed by SHA-256 of the email or client IP
 
 ## Frontend Behavior
 
