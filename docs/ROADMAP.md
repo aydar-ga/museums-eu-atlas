@@ -23,9 +23,19 @@
 - Added saved trip routes (`saved_routes`) in the account panel for signed-in users.
 - Added production operations guidance and richer `/api/healthz` monitoring payload.
 
+## Completed 2026-11-23
+
+- Closed a production sign-in bypass: `POST /api/auth/request-link` returned a working magic link for any email. Production now answers 503 until email delivery is configured; emailed links are never echoed; `AUTH_SECRET` fails closed in production; magic and session tokens are typed.
+- Rate-limited magic-link requests (5 per email, 20 per IP, 15 minutes; Postgres-backed) and branded the email as ArtMuse.
+- Validated progress and saved-route payloads against the museum dataset ([spec](specs/api-payload-validation/spec.md)).
+- Made progress writes atomic with a Neon batch transaction ([spec](specs/atomic-progress-writes/spec.md)).
+- Dependencies: Next 16.4, React 19.3, ESLint 10, Vitest 5, TypeScript 6, Playwright 1.65; `npm audit` 25 findings to 0.
+
 ## Near-Term Next Iteration
 
-- Add real email delivery credentials in Vercel project settings.
+- Make magic-link tokens single-use (store a token id on verification); today a link can be reused within its 10 minutes.
+
+- Add real email delivery credentials in Vercel project settings (Resend for `artmuse.app` in progress). Until then production sign-in answers 503.
 - Consider Next Image after confirming image optimization costs and behavior on Vercel.
 - Add `AUTH_SECRET` to Vercel Preview environments and verify magic-link flow end-to-end in preview deployments.
 - Regenerate Playwright visual snapshots in the same OS/container as CI when visual diffs appear.
@@ -45,4 +55,4 @@ These items are intentionally scoped as a separate product evolution, not part o
 - OAuth, MFA, account deletion, and full account lifecycle UI.
 - Ticket prices, opening hours, live closure data, restoration status, and schedule data.
 - Public API surface.
-- Email delivery hardening beyond basic Resend integration.
+- Email delivery hardening beyond basic Resend integration and request rate limits.

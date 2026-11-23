@@ -60,19 +60,24 @@ export async function writeUserProgress(email: string, snapshot: ProgressSnapsho
   const plannedSet = new Set(snapshot.planned);
   const visitedSet = new Set(snapshot.visited);
 
-  await db.delete(userMuseumProgress).where(eq(userMuseumProgress.userId, userId));
-
+  const deleteExisting = db.delete(userMuseumProgress).where(eq(userMuseumProgress.userId, userId));
   if (slugs.size === 0) {
+    await deleteExisting;
     return;
   }
 
-  await db.insert(userMuseumProgress).values(
-    Array.from(slugs).map((museumSlug) => ({
-      userId,
-      museumSlug,
-      planned: plannedSet.has(museumSlug),
-      visited: visitedSet.has(museumSlug),
-      updatedAt: now
-    }))
-  );
+  // neon-http runs a batch as one transaction: if the insert fails, the delete rolls back
+  // and the user keeps their previous progress instead of losing all of it.
+  await db.batch([
+    deleteExisting,
+    db.insert(userMuseumProgress).values(
+      Array.from(slugs).map((museumSlug) => ({
+        userId,
+        museumSlug,
+        planned: plannedSet.has(museumSlug),
+        visited: visitedSet.has(museumSlug),
+        updatedAt: now
+      }))
+    )
+  ]);
 }
