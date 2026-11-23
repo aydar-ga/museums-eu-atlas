@@ -43,4 +43,25 @@ describe("AuthFlow", () => {
     expect(await screen.findByTestId("magic-link-sent")).toHaveTextContent("We emailed a sign-in link to visitor@example.com.");
     expect(screen.queryByTestId("magic-link-open")).not.toBeInTheDocument();
   });
+
+  it("shows the server message when email sign-in is unavailable", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        new Response(
+          JSON.stringify({ error: "Email sign-in isn't available yet. Your museum progress stays saved in this browser." }),
+          { status: 503, headers: { "Content-Type": "application/json" } }
+        )
+      )
+    );
+    const user = userEvent.setup();
+    render(<AuthFlow />);
+
+    await user.type(screen.getByTestId("auth-email"), "visitor@example.com");
+    await user.click(screen.getByTestId("auth-submit"));
+
+    expect(await screen.findByTestId("auth-error-summary")).toHaveTextContent("Email sign-in isn't available yet.");
+    expect(screen.queryByTestId("magic-link-sent")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("magic-link-open")).not.toBeInTheDocument();
+  });
 });

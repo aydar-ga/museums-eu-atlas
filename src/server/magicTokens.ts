@@ -1,22 +1,21 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
-const tokenLifetimeMs = 10 * 60 * 1000;
+import { authSecret } from "./secret";
 
-function secret(): string {
-  return process.env.AUTH_SECRET || "local-development-secret-change-me";
-}
+const tokenLifetimeMs = 10 * 60 * 1000;
 
 function base64url(input: string): string {
   return Buffer.from(input).toString("base64url");
 }
 
 function sign(payload: string): string {
-  return createHmac("sha256", secret()).update(payload).digest("base64url");
+  return createHmac("sha256", authSecret()).update(payload).digest("base64url");
 }
 
 export function createMagicToken(email: string): string {
   const payload = base64url(
     JSON.stringify({
+      typ: "magic",
       email: email.trim().toLocaleLowerCase("en-US"),
       exp: Date.now() + tokenLifetimeMs
     })
@@ -41,10 +40,11 @@ export function verifyMagicToken(token: string): string {
   }
 
   const decoded = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as {
+    typ?: unknown;
     email?: unknown;
     exp?: unknown;
   };
-  if (typeof decoded.email !== "string" || typeof decoded.exp !== "number") {
+  if (typeof decoded.email !== "string" || typeof decoded.exp !== "number" || decoded.typ !== "magic") {
     throw new Error("Magic link is invalid or expired.");
   }
   if (decoded.exp < Date.now()) {

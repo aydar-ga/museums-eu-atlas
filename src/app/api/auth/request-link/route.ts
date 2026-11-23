@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { createMagicToken, isValidEmail } from "@/server/magicTokens";
+import { isProductionDeployment } from "@/server/secret";
+
+const emailUnavailableMessage =
+  "Email sign-in isn't available yet. Your museum progress stays saved in this browser.";
+
+function emailDeliveryConfigured(): boolean {
+  return Boolean(process.env.RESEND_API_KEY && process.env.AUTH_EMAIL_FROM);
+}
 
 async function sendWithResend(email: string, magicLink: string): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY;
@@ -36,12 +44,29 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
   }
 
+  // In production the link must only ever travel by email: returning it in the response
+  // would let anyone sign in as any address. Without an email provider, refuse.
+  if (isProductionDeployment() && !emailDeliveryConfigured()) {
+    return NextResponse.json({ error: emailUnavailableMessage }, { status: 503 });
+  }
+
   // Never build the link from the client-supplied Origin header: an attacker could
   // request a link for someone else's address and point the emailed token at their host.
   const origin = process.env.PUBLIC_APP_URL?.trim().replace(/\/+$/, "") || request.nextUrl.origin;
-  const token = createMagicToken(email);
+  let token: string;
+  try {
+    token = createMagicToken(email);
+  } catch {
+    return NextResponse.json({ error: "Sign-in is temporarily unavailable." }, { status: 503 });
+  }
   const magicLink = `${origin}/magic-link?token=${encodeURIComponent(token)}`;
-  const sent = await sendWithResend(email, magicLink);
+
+  let sent: boolean;
+  try {
+    sent = await sendWithResend(email, magicLink);
+  } catch {
+    return NextResponse.json({ error: "Could not send the magic link email. Try again later." }, { status: 502 });
+  }
 
   if (sent) {
     // The link proves ownership of the inbox, so it must only travel by email.

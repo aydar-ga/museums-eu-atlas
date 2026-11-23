@@ -36,45 +36,66 @@ export function consumeDevMagicToken(token: string): string {
   return payload.email;
 }
 
+// Local test fallback for environments where the route handlers are unreachable
+// (unit tests). Never used in production builds.
+const allowLocalFallback = process.env.NODE_ENV !== "production";
+
+async function readErrorMessage(response: Response, fallback: string): Promise<string> {
+  const body = (await response.json().catch(() => null)) as { error?: unknown } | null;
+  return typeof body?.error === "string" && body.error ? body.error : fallback;
+}
+
 export async function requestMagicLink(email: string): Promise<MagicLinkResponse> {
   const normalizedEmail = email.trim().toLocaleLowerCase("en-US");
   if (!isValidEmail(normalizedEmail)) {
     throw new Error("Enter a valid email address.");
   }
 
+  let response: Response;
   try {
-    const response = await fetch("/api/auth/request-link", {
+    response = await fetch("/api/auth/request-link", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: normalizedEmail })
     });
-    if (response.ok) {
-      return (await response.json()) as MagicLinkResponse;
-    }
   } catch {
-    // Local test fallback for environments where the route handler is unavailable.
+    if (!allowLocalFallback) {
+      throw new Error("Could not reach the server. Check your connection and try again.");
+    }
+    const token = createDevMagicToken(normalizedEmail);
+    return {
+      email: normalizedEmail,
+      magicLink: absoluteUrl(`/magic-link?token=${encodeURIComponent(token)}`),
+      delivery: "dev"
+    };
   }
 
-  const token = createDevMagicToken(normalizedEmail);
-  return {
-    email: normalizedEmail,
-    magicLink: absoluteUrl(`/magic-link?token=${encodeURIComponent(token)}`),
-    delivery: "dev"
-  };
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "Could not create a magic link."));
+  }
+  return (await response.json()) as MagicLinkResponse;
 }
 
 export async function verifyMagicLink(token: string): Promise<VerifyLinkResponse> {
+  let response: Response;
   try {
-    const response = await fetch("/api/auth/verify-link", {
+    response = await fetch("/api/auth/verify-link", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token })
     });
-    if (response.ok) {
-      return (await response.json()) as VerifyLinkResponse;
-    }
   } catch {
-    // Local test fallback for environments where the route handler is unavailable.
+    if (!allowLocalFallback) {
+      throw new Error("Could not reach the server. Check your connection and try again.");
+    }
+    return { email: consumeDevMagicToken(token) };
   }
-  return { email: consumeDevMagicToken(token) };
+
+  if (!response.ok) {
+    if (allowLocalFallback && token.startsWith(devTokenPrefix)) {
+      return { email: consumeDevMagicToken(token) };
+    }
+    throw new Error(await readErrorMessage(response, "Magic link is invalid or expired."));
+  }
+  return (await response.json()) as VerifyLinkResponse;
 }

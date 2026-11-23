@@ -1,17 +1,15 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
-const sessionLifetimeMs = 30 * 24 * 60 * 60 * 1000;
+import { authSecret } from "./secret";
 
-function secret(): string {
-  return process.env.AUTH_SECRET || "local-development-secret-change-me";
-}
+const sessionLifetimeMs = 30 * 24 * 60 * 60 * 1000;
 
 function base64url(input: string): string {
   return Buffer.from(input).toString("base64url");
 }
 
 function sign(payload: string): string {
-  return createHmac("sha256", secret()).update(payload).digest("base64url");
+  return createHmac("sha256", authSecret()).update(payload).digest("base64url");
 }
 
 function verifySignedPayload(token: string): { email: string; exp: number } {
@@ -31,10 +29,16 @@ function verifySignedPayload(token: string): { email: string; exp: number } {
   }
 
   const decoded = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as {
+    typ?: unknown;
     email?: unknown;
     exp?: unknown;
   };
-  if (typeof decoded.email !== "string" || typeof decoded.exp !== "number") {
+  // Session tokens issued before token types existed carry no typ; a magic-link token never passes.
+  if (
+    typeof decoded.email !== "string" ||
+    typeof decoded.exp !== "number" ||
+    (decoded.typ !== undefined && decoded.typ !== "session")
+  ) {
     throw new Error("Session is invalid or expired.");
   }
   if (decoded.exp < Date.now()) {
@@ -47,6 +51,7 @@ function verifySignedPayload(token: string): { email: string; exp: number } {
 export function createSessionToken(email: string): string {
   const payload = base64url(
     JSON.stringify({
+      typ: "session",
       email: email.trim().toLocaleLowerCase("en-US"),
       exp: Date.now() + sessionLifetimeMs
     })

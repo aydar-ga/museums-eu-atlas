@@ -54,7 +54,8 @@ Production needs at minimum:
 - `AUTH_SECRET`
 - Neon `POSTGRES_URL` / `DATABASE_URL` from Vercel Marketplace
 - `PUBLIC_APP_URL` for magic-link redirects
-- Optional email delivery: `RESEND_API_KEY`, `AUTH_EMAIL_FROM`
+- Email delivery: `RESEND_API_KEY`, `AUTH_EMAIL_FROM`. Without them, production answers `POST /api/auth/request-link` with 503 and nobody can sign in; local progress still works.
+- Rotating `AUTH_SECRET` signs every user out (all session tokens become invalid).
 
 Preview deployments should also receive `AUTH_SECRET` so magic-link and session APIs behave consistently.
 

@@ -15,6 +15,7 @@ function requestLink(email: string, headers: Record<string, string> = {}) {
 describe("POST /api/auth/request-link", () => {
   beforeEach(() => {
     vi.unstubAllEnvs();
+    vi.stubEnv("VERCEL_ENV", "");
     vi.stubEnv("PUBLIC_APP_URL", "");
     vi.stubEnv("RESEND_API_KEY", "");
     vi.stubEnv("AUTH_EMAIL_FROM", "");
@@ -76,5 +77,51 @@ describe("POST /api/auth/request-link", () => {
     const body = (await response.json()) as { magicLink?: string };
 
     expect(body.magicLink).toMatch(/^https:\/\/museums-eu-atlas\.vercel\.app\/magic-link\?token=/);
+  });
+
+  describe("in production (VERCEL_ENV=production)", () => {
+    beforeEach(() => {
+      vi.stubEnv("VERCEL_ENV", "production");
+      vi.stubEnv("AUTH_SECRET", "production-test-secret");
+    });
+
+    it("refuses with 503 and never returns a link when no email provider is configured", async () => {
+      const fetchMock = vi.fn(async () => new Response("{}", { status: 200 }));
+      vi.stubGlobal("fetch", fetchMock);
+
+      const response = await POST(requestLink("visitor@example.com"));
+      const body = (await response.json()) as Record<string, unknown>;
+
+      expect(response.status).toBe(503);
+      expect(body.error).toBe("Email sign-in isn't available yet. Your museum progress stays saved in this browser.");
+      expect(body).not.toHaveProperty("magicLink");
+      expect(JSON.stringify(body)).not.toContain("token=");
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it("still delivers by email when a provider is configured", async () => {
+      vi.stubEnv("RESEND_API_KEY", "re_test");
+      vi.stubEnv("AUTH_EMAIL_FROM", "ArtMuse <noreply@example.com>");
+      vi.stubGlobal("fetch", vi.fn(async () => new Response("{}", { status: 200 })));
+
+      const response = await POST(requestLink("visitor@example.com"));
+      const body = (await response.json()) as Record<string, unknown>;
+
+      expect(response.status).toBe(200);
+      expect(body).toEqual({ email: "visitor@example.com", delivery: "email" });
+    });
+
+    it("refuses with 503 when AUTH_SECRET is missing", async () => {
+      vi.stubEnv("AUTH_SECRET", "");
+      vi.stubEnv("RESEND_API_KEY", "re_test");
+      vi.stubEnv("AUTH_EMAIL_FROM", "ArtMuse <noreply@example.com>");
+      const fetchMock = vi.fn(async () => new Response("{}", { status: 200 }));
+      vi.stubGlobal("fetch", fetchMock);
+
+      const response = await POST(requestLink("visitor@example.com"));
+
+      expect(response.status).toBe(503);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
   });
 });
