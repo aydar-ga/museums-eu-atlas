@@ -70,6 +70,6 @@
 
 ---
 
-<sub>🔧 Building it yourself? See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).</sub>
+<sub>🔧 Technical notes for the maintainer live in [docs/](docs/DEVELOPMENT.md).</sub>
 
 <sub>© Aydar Gazizullin — all rights reserved. See [LICENSE](LICENSE).</sub>
