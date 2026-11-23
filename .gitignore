@@ -17,3 +17,4 @@ var/
 *.tsbuildinfo
 .vercel
 .env*
+next-env.d.ts

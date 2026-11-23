@@ -5,7 +5,7 @@ import { categories, getMuseum, museums, popularityTiers, uniqueCities, uniqueCo
 describe("museum dataset", () => {
   it("keeps the 50 museum English/global dataset", () => {
     expect(museums).toHaveLength(50);
-    expect(museums[0].name).toBe("Louvre Museum");
+    expect(museums[0]?.name).toBe("Louvre Museum");
     expect(new Set(museums.map((museum) => museum.slug)).size).toBe(50);
   });
 
