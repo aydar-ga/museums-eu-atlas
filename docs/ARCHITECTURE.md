@@ -32,6 +32,8 @@ Route handlers:
 - `GET /api/routes`, `POST /api/routes`, and `DELETE /api/routes/[id]` manage saved trip routes for signed-in users.
 - `GET /api/healthz` returns service metadata and database connectivity for monitoring.
 
+Write payloads are parsed by `src/server/payloads.ts`. Museum slug lists keep only slugs from the 50-museum dataset, de-duplicated; unknown slugs are dropped rather than rejected, so browsers holding slugs of removed museums keep syncing. Lists over 200 items, route names outside 1–80 characters, malformed JSON, and non-UUID route ids get 400 (404 for ids). Order of checks: session (401), database configured (503), payload (400/404).
+
 ## Data Model
 
 The canonical museum data is TypeScript in `src/data/museums.generated.ts`, wrapped by helpers in `src/data/museums.ts`. Each museum has slug, name, location, category, themes, popularity tier, family/online flags, summary, visit rationale, highlights, official and online URLs, local image filename, image alt text, credit, and source URLs.

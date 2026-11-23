@@ -122,6 +122,7 @@ export function AccountPanel({ email, onSignInOpen, onLogout }: AccountPanelProp
               type="text"
               value={routeName}
               placeholder="Spring Europe trip"
+              maxLength={80}
               onChange={(event) => setRouteName(event.target.value)}
               data-testid="route-name-input"
             />

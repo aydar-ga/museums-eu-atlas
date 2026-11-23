@@ -1,0 +1,98 @@
+{
+  "slug": "api-payload-validation",
+  "title": "Validate progress and saved-route API payloads",
+  "created": "2026-11-23T19:16:48Z",
+  "base_branch": "orch/2026-11-23",
+  "status": "active",
+  "human_gate": "release",
+  "assumptions": [
+    {
+      "text": "Limits: 200 raw items per slug list, 80 characters per route name; route-name input gets maxLength=80 to match",
+      "at": "2026-11-23T19:18:32Z"
+    }
+  ],
+  "stages": [
+    {
+      "name": "intake",
+      "status": "skipped",
+      "evidence": null,
+      "note": null,
+      "at": null,
+      "reason": "not selected for this change"
+    },
+    {
+      "name": "spec",
+      "status": "passed",
+      "evidence": "docs/specs/api-payload-validation/spec.md: 8 acceptance criteria, 3 NFRs",
+      "note": null,
+      "at": "2026-11-23T19:17:54Z"
+    },
+    {
+      "name": "design",
+      "status": "skipped",
+      "evidence": null,
+      "note": null,
+      "at": null,
+      "reason": "not selected for this change"
+    },
+    {
+      "name": "test-red",
+      "status": "passed",
+      "evidence": "ag-tdd red: 4 files failed, 6 behavioural failures + missing module before implementation",
+      "note": null,
+      "at": "2026-11-23T19:18:32Z"
+    },
+    {
+      "name": "implement",
+      "status": "passed",
+      "evidence": "src/server/payloads.ts + 3 route handlers; vitest 51/51",
+      "note": null,
+      "at": "2026-11-23T19:18:32Z"
+    },
+    {
+      "name": "verify",
+      "status": "pending",
+      "evidence": null,
+      "note": null,
+      "at": null
+    },
+    {
+      "name": "review",
+      "status": "pending",
+      "evidence": null,
+      "note": null,
+      "at": null
+    },
+    {
+      "name": "docs",
+      "status": "pending",
+      "evidence": null,
+      "note": null,
+      "at": null
+    },
+    {
+      "name": "pr",
+      "status": "skipped",
+      "evidence": null,
+      "note": null,
+      "at": null,
+      "reason": "not selected for this change"
+    },
+    {
+      "name": "release",
+      "status": "skipped",
+      "evidence": null,
+      "note": null,
+      "at": null,
+      "reason": "not selected for this change"
+    },
+    {
+      "name": "prod-check",
+      "status": "skipped",
+      "evidence": null,
+      "note": null,
+      "at": null,
+      "reason": "not selected for this change"
+    }
+  ]
+}
