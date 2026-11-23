@@ -30,6 +30,7 @@
 - Validated progress and saved-route payloads against the museum dataset ([spec](specs/api-payload-validation/spec.md)).
 - Made progress writes atomic with a Neon batch transaction ([spec](specs/atomic-progress-writes/spec.md)).
 - One Zod-validated env module (`src/lib/env.ts`): the only `process.env` reader in `src/`, validated at request time so builds need no secrets; the `AUTH_SECRET` development fallback is gone. `AUTH_SECRET` rotated for Production and added for Preview.
+- Security headers on every path (HSTS, nosniff, Referrer-Policy, Permissions-Policy, `frame-ancestors 'none'`), with the full CSP as Report-Only.
 - Dependencies: Next 16.4, React 19.3, ESLint 10, Vitest 5, TypeScript 6, Playwright 1.65; `npm audit` 25 findings to 0.
 
 ## Near-Term Next Iteration
@@ -39,6 +40,7 @@
 - Add real email delivery credentials in Vercel project settings (Resend for `artmuse.app` in progress). Until then production sign-in answers 503.
 - Consider Next Image after confirming image optimization costs and behavior on Vercel.
 - Verify the magic-link flow end-to-end on a Preview deployment (Preview has `AUTH_SECRET` since 2026-11-23).
+- Enforce the full Content-Security-Policy once the Report-Only policy shows no violations in production (watch the browser console on artmuse.app and a Preview with the Vercel toolbar).
 - Regenerate Playwright visual snapshots in the same OS/container as CI when visual diffs appear.
 
 ## Future Product Vision (New Project Direction)

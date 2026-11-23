@@ -92,6 +92,10 @@ On Vercel, `npm run build` runs `scripts/migrate-if-configured.mjs` first. When 
 
 Images live in `public/images`. Runtime hotlinking is not used. Image source and license notes remain in `docs/sources.md`.
 
+## Security Headers
+
+`next.config.ts` sends OWASP headers on every path: `Strict-Transport-Security` (2 years, subdomains), `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` denying camera, microphone and geolocation, `X-Frame-Options: DENY`, and an enforced `Content-Security-Policy: frame-ancestors 'none'`. The full static CSP (`default-src 'self'`, `script-src 'self' 'unsafe-inline'`, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, ...) ships as `Content-Security-Policy-Report-Only` until it has run clean in production; then it can be enforced. A static policy keeps pages statically rendered; a nonce policy would force dynamic rendering. `tests/e2e/security-headers.spec.ts` asserts the headers and zero CSP violations on the home, museum and account pages.
+
 ## Operations
 
 See `docs/OPERATIONS.md` for health-check monitoring and rollback policy.
