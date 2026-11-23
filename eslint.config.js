@@ -1,19 +1,14 @@
 import js from "@eslint/js";
 import nextPlugin from "@next/eslint-plugin-next";
+import { defineConfig, globalIgnores } from "eslint/config";
 import reactHooks from "eslint-plugin-react-hooks";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 
-export default tseslint.config(
+export default defineConfig(
+  globalIgnores([".next/**", "node_modules/**", "reports/**", "coverage/**", "test-results/**", "playwright-report/**"]),
   {
-    ignores: [
-      ".next/**",
-      "node_modules/**",
-      "reports/**"
-    ]
-  },
-  {
-    extends: [js.configs.recommended, ...tseslint.configs.recommended],
+    extends: [js.configs.recommended, tseslint.configs.recommended],
     files: ["src/**/*.{ts,tsx}", "tests/**/*.ts", "*.ts"],
     languageOptions: {
       ecmaVersion: 2023,
@@ -28,6 +23,7 @@ export default tseslint.config(
     },
     rules: {
       ...nextPlugin.configs.recommended.rules,
+      ...nextPlugin.configs["core-web-vitals"].rules,
       ...reactHooks.configs.recommended.rules,
       "react-hooks/set-state-in-effect": "off"
     }

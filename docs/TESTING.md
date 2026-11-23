@@ -3,6 +3,7 @@
 ## Test Layers
 
 - ESLint for static checks.
+- `npm run typecheck` (`next typegen && tsc --noEmit`) for TypeScript without a full build.
 - `next build` for TypeScript and App Router build validation.
 - Vitest for unit/component tests.
 - Playwright for e2e browser tests.
@@ -58,13 +59,13 @@ npm run test:e2e
 
 ## CI Pipeline
 
-GitHub Actions runs four independent jobs on pull requests and pushes to `main`:
+GitHub Actions runs five jobs on pull requests and pushes to `main`:
 
 0. **Workflow lint** — actionlint validates `.github/workflows/ci.yml` before any job runs.
-1. **Lint** — ESLint static analysis.
+1. **Lint** — ESLint static analysis, then `npm run typecheck`.
 2. **Build** — `next build` production validation.
 3. **Unit & component tests** — Vitest (`npm run test`).
-4. **End-to-end tests** — Playwright in the official `mcr.microsoft.com/playwright:v1.60.0-noble` image; runs after build succeeds. Browsers are preinstalled in the container, so CI does not call `playwright install`.
+4. **End-to-end tests** — Playwright in the official `mcr.microsoft.com/playwright:v1.65.1-noble` image; runs after build succeeds. Browsers are preinstalled in the container, so CI does not call `playwright install`.
 
 The Playwright container image tag in `.github/workflows/ci.yml` must stay a literal string. GitHub Actions does not allow the `env` context in `container.image`.
 
