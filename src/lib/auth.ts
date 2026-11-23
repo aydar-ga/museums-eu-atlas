@@ -1,4 +1,5 @@
 import type { MagicLinkResponse, VerifyLinkResponse } from "../types";
+import { isProductionBuild } from "./env";
 
 const devTokenPrefix = "dev.";
 
@@ -38,7 +39,7 @@ export function consumeDevMagicToken(token: string): string {
 
 // Local test fallback for environments where the route handlers are unreachable
 // (unit tests). Never used in production builds.
-const allowLocalFallback = process.env.NODE_ENV !== "production";
+const allowLocalFallback = !isProductionBuild;
 
 async function readErrorMessage(response: Response, fallback: string): Promise<string> {
   const body = (await response.json().catch(() => null)) as { error?: unknown } | null;

@@ -57,7 +57,7 @@ Production needs at minimum:
 - Email delivery: `RESEND_API_KEY`, `AUTH_EMAIL_FROM`. Without them, production answers `POST /api/auth/request-link` with 503 and nobody can sign in; local progress still works.
 - Rotating `AUTH_SECRET` signs every user out (all session tokens become invalid).
 
-Preview deployments should also receive `AUTH_SECRET` so magic-link and session APIs behave consistently.
+Preview deployments have their own `AUTH_SECRET` (since 2026-11-23). Without one, sign-in on that deployment answers 503; the build still succeeds because `src/lib/env.ts` validates at request time.
 
 ## Local verification before promote
 

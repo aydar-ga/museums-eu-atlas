@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getDb } from "@/db";
+import { emailDelivery, isProductionDeployment, serverEnv } from "@/lib/env";
 import { createMagicToken, isValidEmail } from "@/server/magicTokens";
 import {
   checkRateLimits,
@@ -11,21 +12,16 @@ import {
   requestLinkLimitPerIp,
   requestLinkWindowMs
 } from "@/server/rateLimit";
-import { isProductionDeployment } from "@/server/secret";
 
 const emailUnavailableMessage =
   "Email sign-in isn't available yet. Your museum progress stays saved in this browser.";
 
-function emailDeliveryConfigured(): boolean {
-  return Boolean(process.env.RESEND_API_KEY && process.env.AUTH_EMAIL_FROM);
-}
-
 async function sendWithResend(email: string, magicLink: string): Promise<boolean> {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.AUTH_EMAIL_FROM;
-  if (!apiKey || !from) {
+  const delivery = emailDelivery();
+  if (!delivery) {
     return false;
   }
+  const { apiKey, from } = delivery;
 
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -83,7 +79,7 @@ export async function POST(request: NextRequest) {
 
   // In production the link must only ever travel by email: returning it in the response
   // would let anyone sign in as any address. Without an email provider, refuse.
-  if (isProductionDeployment() && !emailDeliveryConfigured()) {
+  if (isProductionDeployment() && !emailDelivery()) {
     return NextResponse.json({ error: emailUnavailableMessage }, { status: 503 });
   }
 
@@ -94,9 +90,10 @@ export async function POST(request: NextRequest) {
 
   // Never build the link from the client-supplied Origin header: an attacker could
   // request a link for someone else's address and point the emailed token at their host.
-  const origin = process.env.PUBLIC_APP_URL?.trim().replace(/\/+$/, "") || request.nextUrl.origin;
+  let origin: string;
   let token: string;
   try {
+    origin = serverEnv().PUBLIC_APP_URL ?? request.nextUrl.origin;
     token = createMagicToken(email);
   } catch {
     return NextResponse.json({ error: "Sign-in is temporarily unavailable." }, { status: 503 });

@@ -61,7 +61,7 @@ The utility rail (sign-in + theme controls) renders through `UtilityRailHost`, a
 
 Auth is passwordless and intentionally minimal. The route handler signs a time-limited magic-link token with `AUTH_SECRET`. Successful verification also returns a longer-lived signed session token stored in `localStorage` as `museumsEuAtlasSession`.
 
-Tokens are HMAC-SHA256 signed with `AUTH_SECRET` (`src/server/secret.ts`). Magic-link tokens (`typ: "magic"`, 10 minutes) and session tokens (`typ: "session"`, 30 days) are not interchangeable; session tokens issued before the `typ` claim existed are still accepted. On the production deployment a missing `AUTH_SECRET` fails closed: token creation and verification throw instead of using the development fallback. Magic-link tokens are stateless, so one can be reused until it expires.
+Tokens are HMAC-SHA256 signed with `AUTH_SECRET` (`requireAuthSecret()` in `src/lib/env.ts`). Magic-link tokens (`typ: "magic"`, 10 minutes) and session tokens (`typ: "session"`, 30 days) are not interchangeable; session tokens issued before the `typ` claim existed are still accepted. A missing `AUTH_SECRET` fails closed in every environment: token creation and verification throw, and the auth routes answer 503 or 401. There is no development fallback. Magic-link tokens are stateless, so one can be reused until it expires.
 
 Authenticated API routes read `Authorization: Bearer <sessionToken>`.
 

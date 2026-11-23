@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
-import { authSecret } from "./secret";
+import { requireAuthSecret } from "@/lib/env";
 
 const tokenLifetimeMs = 10 * 60 * 1000;
 
@@ -9,7 +9,7 @@ function base64url(input: string): string {
 }
 
 function sign(payload: string): string {
-  return createHmac("sha256", authSecret()).update(payload).digest("base64url");
+  return createHmac("sha256", requireAuthSecret()).update(payload).digest("base64url");
 }
 
 export function createMagicToken(email: string): string {

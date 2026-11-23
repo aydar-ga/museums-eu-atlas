@@ -42,14 +42,17 @@ npm run test:e2e    # Playwright
 
 ## Environment Variables
 
+App code reads the environment only through `src/lib/env.ts`. It parses `process.env` with a Zod schema on each request, never at import, so `next build` needs no secrets (CI and Preview builds), and a missing or malformed value fails only the request that needs it. Client components may import its build-time `isProductionBuild` flag; the schema is built lazily so Zod stays out of the client bundle. Tooling (`*.config.ts`, `scripts/`) reads `process.env` directly.
+
 Supported variables:
 
 - `APP_PORT` - local Playwright/dev port, default `5001`.
-- `DATABASE_URL` or Vercel-provisioned `POSTGRES_URL` - Neon Postgres connection string for Drizzle account persistence.
-- `AUTH_SECRET` - signs magic-link tokens; required for shared deployments.
+- `DATABASE_URL`, Vercel-provisioned `POSTGRES_URL`, or `POSTGRES_PRISMA_URL` (in that order) - Neon Postgres connection string for Drizzle account persistence.
+- `AUTH_SECRET` - signs magic-link and session tokens. Required wherever sign-in is used, local runs included: there is no fallback, so sign-in answers 503 without it. Generate one with `openssl rand -base64 32`.
 - `PUBLIC_APP_URL` - optional absolute URL for generated magic links.
 - `RESEND_API_KEY` - optional email delivery.
 - `AUTH_EMAIL_FROM` - optional sender address for email delivery.
+- `GIT_COMMIT` - optional commit id that `/api/healthz` reports outside Vercel.
 - `APP_BASE_URL` - optional Playwright target for an already running app.
 
 Without `DATABASE_URL`, magic-link auth still works locally and the browser session stays in `localStorage`.

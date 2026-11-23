@@ -49,6 +49,8 @@ export default defineConfig({
         command: "npm run dev",
         url: baseURL,
         reuseExistingServer: !process.env.CI,
+        // The app has no fallback signing key; this throwaway one exists only for the server Playwright starts.
+        env: { AUTH_SECRET: "playwright-e2e-only-not-a-secret" },
         timeout: 60_000,
         stdout: "pipe",
         stderr: "pipe"

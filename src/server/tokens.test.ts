@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createMagicToken, verifyMagicToken } from "./magicTokens";
-import { authSecret, isProductionDeployment } from "./secret";
+import { isProductionDeployment, requireAuthSecret } from "@/lib/env";
 import { createSessionToken, verifySessionToken } from "./sessions";
 
 afterEach(() => {
@@ -10,25 +10,18 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe("authSecret", () => {
-  it("uses AUTH_SECRET when set", () => {
+describe("requireAuthSecret", () => {
+  it("uses AUTH_SECRET exactly as stored, so existing signatures stay valid", () => {
     vi.stubEnv("VERCEL_ENV", "production");
-    vi.stubEnv("AUTH_SECRET", "s3cret");
-    expect(authSecret()).toBe("s3cret");
+    vi.stubEnv("AUTH_SECRET", " s3cret ");
+    expect(requireAuthSecret()).toBe(" s3cret ");
   });
 
-  it("falls back to a development secret outside production", () => {
-    vi.stubEnv("VERCEL_ENV", "preview");
-    vi.stubEnv("AUTH_SECRET", "");
-    expect(isProductionDeployment()).toBe(false);
-    expect(authSecret()).toBe("local-development-secret-change-me");
-  });
-
-  it("fails closed in production when AUTH_SECRET is missing", () => {
-    vi.stubEnv("VERCEL_ENV", "production");
+  it.each(["production", "preview", ""])("fails closed when AUTH_SECRET is missing (VERCEL_ENV=%j)", (vercelEnv) => {
+    vi.stubEnv("VERCEL_ENV", vercelEnv);
     vi.stubEnv("AUTH_SECRET", "  ");
-    expect(isProductionDeployment()).toBe(true);
-    expect(() => authSecret()).toThrow(/AUTH_SECRET/);
+    expect(isProductionDeployment()).toBe(vercelEnv === "production");
+    expect(() => requireAuthSecret()).toThrow(/AUTH_SECRET/);
     expect(() => createSessionToken("visitor@example.com")).toThrow(/AUTH_SECRET/);
     expect(() => createMagicToken("visitor@example.com")).toThrow(/AUTH_SECRET/);
   });
@@ -69,5 +62,5 @@ describe("token types", () => {
 import { createHmac } from "node:crypto";
 
 function createLegacySignature(payload: string): string {
-  return createHmac("sha256", authSecret()).update(payload).digest("base64url");
+  return createHmac("sha256", requireAuthSecret()).update(payload).digest("base64url");
 }

@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { serverEnv } from "@/lib/env";
 import { isValidEmail } from "@/server/magicTokens";
 import { createSessionToken } from "@/server/sessions";
 import { recordUserSignIn } from "@/server/users";
 
 export async function POST(request: NextRequest) {
-  if (process.env.NODE_ENV === "production") {
+  if (serverEnv().NODE_ENV === "production") {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
