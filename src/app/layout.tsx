@@ -4,6 +4,7 @@ import Script from "next/script";
 import type { ReactNode } from "react";
 
 import { ClientShell } from "@/components/ClientShell";
+import { rootMetadata } from "@/lib/site";
 import "./globals.css";
 
 const robotoMono = Roboto_Mono({
@@ -13,10 +14,7 @@ const robotoMono = Roboto_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Europe's Top 50 Art Museums Atlas",
-  description:
-    "A compact tracker for Europe's major art museums, with local visit progress, filters, and researched museum detail pages.",
-  applicationName: "Art Museums Atlas",
+  ...rootMetadata,
   manifest: "/favicons/manifest.json",
   icons: {
     icon: [
@@ -48,13 +46,6 @@ export const metadata: Metadata = {
     "msapplication-TileColor": "#111111",
     "msapplication-TileImage": "/favicons/ms-icon-144x144.png",
     "msapplication-config": "/favicons/browserconfig.xml"
-  },
-  openGraph: {
-    title: "Europe's Top 50 Art Museums Atlas",
-    description:
-      "Track visits, compare cities, and plan routes through major European and global art collections.",
-    locale: "en_US",
-    siteName: "museums-eu-atlas"
   }
 };
 

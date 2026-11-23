@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -6,9 +7,35 @@ import { notFound } from "next/navigation";
 import { ArrowLeftIcon } from "@/components/Icons";
 import { fallbackImage, museumImageUrl } from "@/lib/image";
 import { getMuseum, museums, relatedMuseums } from "@/data/museums";
+import { baseOpenGraph } from "@/lib/site";
 
 export function generateStaticParams() {
   return museums.map((museum) => ({ slug: museum.slug }));
+}
+
+type MuseumPageProps = {
+  params: Promise<{ slug: string }>;
+};
+
+export async function generateMetadata({ params }: MuseumPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const museum = getMuseum(slug);
+  if (!museum) {
+    return {};
+  }
+  const path = `/museums/${museum.slug}`;
+  return {
+    title: museum.name,
+    description: museum.summary,
+    alternates: { canonical: path },
+    openGraph: {
+      ...baseOpenGraph,
+      url: path,
+      title: `${museum.name} — ArtMuse`,
+      description: museum.summary,
+      images: [{ url: museumImageUrl(museum.image), alt: museum.imageAlt }]
+    }
+  };
 }
 
 export default async function MuseumDetailPage({

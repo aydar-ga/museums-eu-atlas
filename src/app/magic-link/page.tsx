@@ -1,6 +1,9 @@
 import { Suspense } from "react";
 
 import { MagicLinkClient } from "@/components/MagicLinkClient";
+import { privatePageMetadata } from "@/lib/site";
+
+export const metadata = privatePageMetadata;
 
 export default function MagicLinkPage() {
   return (
