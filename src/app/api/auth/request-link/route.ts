@@ -48,19 +48,8 @@ async function sendWithResend(email: string, magicLink: string): Promise<boolean
   return true;
 }
 
-export async function POST(request: NextRequest) {
-  const body = (await request.json().catch(() => ({}))) as { email?: unknown };
-  const email = typeof body.email === "string" ? body.email.trim().toLocaleLowerCase("en-US") : "";
-  if (!isValidEmail(email)) {
-    return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
-  }
-
-  // In production the link must only ever travel by email: returning it in the response
-  // would let anyone sign in as any address. Without an email provider, refuse.
-  if (isProductionDeployment() && !emailDeliveryConfigured()) {
-    return NextResponse.json({ error: emailUnavailableMessage }, { status: 503 });
-  }
-
+/** Returns a refusal response when the email or client IP is over its limit, else null. */
+async function enforceRateLimits(request: NextRequest, email: string): Promise<NextResponse | null> {
   let limit;
   try {
     limit = await checkRateLimits(
@@ -75,12 +64,32 @@ export async function POST(request: NextRequest) {
     // Without a working counter we cannot bound email sends, so refuse rather than fail open.
     return NextResponse.json({ error: "Sign-in is temporarily unavailable." }, { status: 503 });
   }
-  if (!limit.allowed) {
-    const minutes = Math.ceil(limit.retryAfterSeconds / 60);
-    return NextResponse.json(
-      { error: `Too many sign-in requests. Try again in ${minutes} minute${minutes === 1 ? "" : "s"}.` },
-      { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
-    );
+  if (limit.allowed) {
+    return null;
+  }
+  const minutes = Math.ceil(limit.retryAfterSeconds / 60);
+  return NextResponse.json(
+    { error: `Too many sign-in requests. Try again in ${minutes} minute${minutes === 1 ? "" : "s"}.` },
+    { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
+  );
+}
+
+export async function POST(request: NextRequest) {
+  const body = (await request.json().catch(() => ({}))) as { email?: unknown };
+  const email = typeof body.email === "string" ? body.email.trim().toLocaleLowerCase("en-US") : "";
+  if (!isValidEmail(email)) {
+    return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
+  }
+
+  // In production the link must only ever travel by email: returning it in the response
+  // would let anyone sign in as any address. Without an email provider, refuse.
+  if (isProductionDeployment() && !emailDeliveryConfigured()) {
+    return NextResponse.json({ error: emailUnavailableMessage }, { status: 503 });
+  }
+
+  const limited = await enforceRateLimits(request, email);
+  if (limited) {
+    return limited;
   }
 
   // Never build the link from the client-supplied Origin header: an attacker could
