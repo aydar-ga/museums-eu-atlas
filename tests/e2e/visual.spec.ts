@@ -48,6 +48,12 @@ test.describe("visual regression", () => {
 
   test("signed-in account panel", async ({ page }) => {
     await page.goto("/account?testUser=e2e%40example.com", { waitUntil: "domcontentloaded" });
+    // The dev session and progress sync resolve after load; capture only the settled signed-in state.
+    // CI has no database, so the sync status settles on the offline message.
+    await expect(page.getByTestId("account-email")).toHaveText("e2e@example.com");
+    await expect(page.getByTestId("account-sync-status")).toHaveText(
+      "Progress stays local until the database connection is available."
+    );
     await stabilizePage(page);
     await expect(page.getByTestId("side-panel")).toHaveScreenshot("account-panel-signed-in.png");
     await expect(page.locator(".utility-rail")).toHaveScreenshot("utility-rail-signed-in-dark.png");
