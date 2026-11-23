@@ -1,5 +1,7 @@
 # Development
 
+Technical guide for ArtMuse (`museums-eu-atlas`): an English Next.js App Router app (React, TypeScript, Neon Postgres via Drizzle, Vitest, Playwright) deployed on Vercel at https://artmuse.app. The visitor-facing [README](../README.md) carries no technical detail; it all lives here and in the docs listed below.
+
 ## Prerequisites
 
 - Node.js 24 (pinned in `.nvmrc`; run `nvm use`). CI uses the same major.
@@ -89,3 +91,44 @@ npm install -D package-name
 ```
 
 Do not reintroduce Python dependency management for the app runtime.
+
+## Favicons
+
+Edit `public/favicons/museum-icon.svg`, then regenerate the PNG/ICO sizes:
+
+```bash
+npm run generate:favicons
+```
+
+## End-to-end tests
+
+```bash
+npx playwright install chromium
+npm run test:e2e
+APP_BASE_URL=http://127.0.0.1:5001 npm run test:e2e   # against an already running app
+```
+
+The account e2e path uses `/account?testUser=e2e@example.com` in development, so the suite can check the signed-in UI without email delivery. Details: [TESTING.md](TESTING.md).
+
+## Deploying (Vercel + Neon)
+
+Pushes to `main` deploy through the Vercel Git integration (project `museums-eu-atlas`, team `aydar-ga-projects`). Production is https://artmuse.app; `museums-eu-atlas.vercel.app` redirects there.
+
+1. Neon is connected through Vercel → Storage, which injects `POSTGRES_URL` / `DATABASE_URL`.
+2. The Vercel build (`npm run vercel-build`) runs Drizzle migrations from `drizzle/` before `next build`, so schema changes ship with the deploy. Migrations must be additive.
+3. Production needs `AUTH_SECRET` and `PUBLIC_APP_URL`; email sign-in also needs `RESEND_API_KEY` and `AUTH_EMAIL_FROM` (without them, production sign-in answers 503). See [OPERATIONS.md](OPERATIONS.md).
+
+## Project docs
+
+- [AGENT_INDEX.md](AGENT_INDEX.md): map of the codebase for agents and humans.
+- [ARCHITECTURE.md](ARCHITECTURE.md): routes, data model, auth.
+- [DECISIONS.md](DECISIONS.md), [DESIGN_DIRECTION.md](DESIGN_DIRECTION.md), [BRANDING.md](BRANDING.md).
+- [TESTING.md](TESTING.md), [OPERATIONS.md](OPERATIONS.md), [ROADMAP.md](ROADMAP.md).
+- [sources.md](sources.md): data sources and image credits.
+- [owner-actions.md](owner-actions.md): open to-dos only the owner can do.
+
+## Non-goals
+
+- No OAuth, MFA, account deletion, or password reset; magic links replace passwords.
+- No runtime image hotlinking.
+- No Russian product content copied from `museums-tracker-ru`.

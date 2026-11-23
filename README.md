@@ -1,112 +1,75 @@
-# museums-eu-atlas
+<div align="center">
 
-English-language Next.js app for discovering and tracking visits to 50 major European and global art museums. The product header is "Europe's Top 50 Art Museums Atlas" and the app keeps the compact Roboto Mono museum-card experience while using TypeScript, React, Next App Router, Vitest, Playwright, and Vercel.
+# 🎨 ArtMuse
 
-## What Is Included
+**Steal culture legally.** Track, plan and collect Europe's top 50 art museums.
 
-- 50 researched art museums, museum complexes, palace collections, and artist museums.
-- Search plus country, city, category, planned-only, and visited-only filters.
-- Local planned/visit progress, milestone feedback, and legacy numeric-id localStorage migration.
-- Light/dark mode with header icon controls, system preference fallback, and persisted local preference.
-- Magic-link signup/sign-in using Next route handlers. In local/dev mode the link is shown directly; with `RESEND_API_KEY` and `AUTH_EMAIL_FROM`, the API can send email.
-- Signed-in users open account actions from the header account icon; sign-out lives inside the account panel.
-- Detail pages with reasons to visit, highlights, official links, online collections, source links, and image credits.
-- Local image files only, plus an SVG fallback for missing images.
-- npm-based tooling, ESLint, TypeScript build checks, Vitest unit/component tests, and Playwright e2e tests.
-- Vercel configuration for Next.js deployment.
+### [🎨 Open ArtMuse → artmuse.app](https://artmuse.app)
 
-## Quickstart
+[![Live site](https://img.shields.io/badge/live-artmuse.app-2563eb?style=flat-square)](https://artmuse.app)
+[![CI](https://img.shields.io/github/actions/workflow/status/aydar-ga/museums-eu-atlas/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/aydar-ga/museums-eu-atlas/actions/workflows/ci.yml)
+[![Next.js](https://img.shields.io/badge/Next.js-16-000000?style=flat-square&logo=nextdotjs)](https://nextjs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6-3178c6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![License](https://img.shields.io/badge/license-All%20rights%20reserved-lightgrey?style=flat-square)](LICENSE)
 
-```bash
-npm install
-npm run dev
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset=".github/assets/desktop-dark.webp">
+  <source media="(prefers-color-scheme: light)" srcset=".github/assets/desktop-light.webp">
+  <img alt="ArtMuse home: a grid of Europe's top art museums with search, filters and visit progress" src=".github/assets/desktop-dark.webp" width="860">
+</picture>
 
-Open `http://127.0.0.1:5001/`.
+</div>
 
-Local dev runs Next's webpack dev backend because the current Turbopack dev server can panic on the account route in this project.
+## ✨ What it does
 
-To use another port:
+| | |
+|---|---|
+| 🏛️ **50 must-see museums** | Hand-picked art museums, palaces and artist houses across 17 countries and 29 cities, from the Louvre to the Munch Museum. |
+| 🔎 **Find your next one** | Search by name, artist or theme, and filter by country, city or category. |
+| ⭐ **Plan it** | Tap *Want to visit* to build your shortlist. |
+| ✅ **Collect it** | Tap *Mark visited* and watch your count climb: "12 of 50 museums visited". |
+| 📖 **Know why you're going** | Every museum gets reasons to visit, highlights, its official site and its online collection. |
+| 🌗 **Light or dark** | Gallery-dark by default, museum-paper light if you prefer. |
+| 📱 **Pocket-sized** | Works on phone, tablet and desktop. |
+| 🔒 **No account needed** | Your list lives in your browser. |
 
-```bash
-npm run dev -- -H 127.0.0.1 -p 5010
-```
+<table>
+  <tr>
+    <td align="center"><img alt="Rijksmuseum detail page" src=".github/assets/detail-light.webp" width="520"><br><sub>A museum page: why go, highlights, links</sub></td>
+    <td align="center"><img alt="ArtMuse on a phone in dark mode" src=".github/assets/mobile-dark.webp" width="200"><br><sub>On your phone</sub></td>
+  </tr>
+</table>
 
-## Common Commands
+## 🗺️ How to use it
 
-```bash
-npm run lint
-npm run build
-npm run test
-npm run test:e2e
-npm run check
-npm run generate:favicons
-npm run db:migrate
-npm run db:push
-```
+1. **Browse** 👀 Open [artmuse.app](https://artmuse.app) and filter by the city you're heading to.
+2. **Plan** ⭐ Mark the museums you want to see.
+3. **Collect** ✅ Mark each one visited after you've been, and keep going until you hit 50.
 
-Regenerate PNG/ICO favicon sizes after editing `public/favicons/museum-icon.svg`:
+## 🛣️ Roadmap
 
-```bash
-npm run generate:favicons
-```
+| Status | What |
+|---|---|
+| ✅ | 50-museum atlas with search and filters |
+| ✅ | Want-to-visit and visited tracking with a progress count |
+| ✅ | Museum pages with highlights, official links and online collections |
+| ✅ | Light and dark themes, phone to desktop |
+| ✅ | A new name and home: ArtMuse at [artmuse.app](https://artmuse.app) |
+| 🚧 | Email sign-in, so your list follows you across devices |
+| 🚧 | Saved trip routes for signed-in travellers |
+| 🔮 | A scratch-off Europe map of your museum journey, ready to print or share |
+| 🔮 | Collections and badges: Impressionist Hunter, Renaissance Master, Northern Masters |
+| 🔮 | An AI museum guide that adapts to you: tourist, student or art nerd |
 
-Playwright browsers:
+## 🙌 Credits
 
-```bash
-npx playwright install chromium
-```
+- 📷 **Museum photos** come from photographers on [Wikimedia Commons](https://commons.wikimedia.org), each under its own Creative Commons licence. Every image's author and licence is listed in [the image credits](docs/sources.md#image-methodology).
+- 🏛️ **Museum facts** come from the museums themselves, for example the [Louvre](https://www.louvre.fr/en), [Prado](https://www.museodelprado.es/en), [Rijksmuseum](https://www.rijksmuseum.nl/en), [Uffizi](https://www.uffizi.it/en/the-uffizi) and [British Museum](https://www.britishmuseum.org/). Each museum page links its official site.
+- 📊 **Visitor context** from [The Art Newspaper's most-visited museums survey](https://www.theartnewspaper.com/).
+- Museum names and trademarks belong to their owners. ArtMuse is an independent project and is not affiliated with any museum.
 
-Run against an already running app:
+---
 
-```bash
-APP_BASE_URL=http://127.0.0.1:5001 npm run test:e2e
-```
+<sub>🔧 Building it yourself? See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).</sub>
 
-The account e2e path uses `/account?testUser=e2e@example.com` in development so the suite can verify the signed-in UI without depending on email delivery.
-
-## Vercel + Neon (zero manual DB wiring)
-
-Repository: **https://github.com/aydar-ga/museums-eu-atlas**
-
-1. In Vercel, import the GitHub repo `aydar-ga/museums-eu-atlas`.
-2. Open the project → **Storage** → **Connect Database** → choose **Neon**.
-3. Add `AUTH_SECRET` in Project Settings → Environment Variables (Production + Preview).
-4. Deploy. Vercel injects `POSTGRES_URL`; the build runs Drizzle migrations automatically before `next build`.
-
-No local `DATABASE_URL` copy/paste is required when Neon is connected through Vercel Marketplace.
-
-Optional CLI deploy after linking:
-
-```bash
-vercel link
-vercel integration add neon
-vercel env add AUTH_SECRET
-vercel deploy --prod
-```
-
-Environment variables are documented in `.env.example`. Add `PUBLIC_APP_URL`, `RESEND_API_KEY`, and `AUTH_EMAIL_FROM` when real email delivery is desired.
-
-## Architecture
-
-The project intentionally uses Next.js App Router now because deployment to Vercel and TypeScript-first engineering are explicit requirements. Museum visit progress remains browser-local; magic-link auth creates a local browser session and upserts the account in Neon when Vercel injects `POSTGRES_URL` or `DATABASE_URL`.
-
-Read these first:
-
-- `CLAUDE.md`
-- `CODEX.md`
-- `docs/AGENT_INDEX.md`
-- `docs/ARCHITECTURE.md`
-- `docs/DEVELOPMENT.md`
-- `docs/TESTING.md`
-- `docs/DECISIONS.md`
-- `docs/ROADMAP.md`
-- `docs/DESIGN_DIRECTION.md`
-- `docs/sources.md`
-
-## Non-Goals
-
-- No database-backed museum visit sync yet.
-- No OAuth, MFA, account deletion, or password reset; magic links replace passwords.
-- No runtime image hotlinking.
-- No Russian product content copied from `museums-tracker-ru`.
+<sub>© Aydar Gazizullin — all rights reserved. See [LICENSE](LICENSE).</sub>

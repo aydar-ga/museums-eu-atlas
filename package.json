@@ -2,6 +2,7 @@
   "name": "museums-eu-atlas",
   "version": "3.0.0",
   "private": true,
+  "license": "UNLICENSED",
   "type": "module",
   "scripts": {
     "dev": "next dev --webpack -H 127.0.0.1 -p ${APP_PORT:-5001}",

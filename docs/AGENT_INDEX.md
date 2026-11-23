@@ -10,7 +10,7 @@ The active stack is Next.js App Router, React, TypeScript, static CSS, local ima
 
 ## Read First
 
-1. `README.md` - quickstart, commands, local/test/Vercel workflow.
+1. `docs/DEVELOPMENT.md` - quickstart, commands, local/test/Vercel workflow. (`README.md` is the visitor-facing showcase and has no technical content.)
 2. `AGENTS.md` (cross-tool, read by Codex and others), `CLAUDE.md`, and `CODEX.md` - agent guardrails and iteration checklist.
 3. `docs/ARCHITECTURE.md` - app structure, routes, data flow, limits.
 4. `src/data/museums.ts` and `src/data/museums.generated.ts` - validated museum dataset and filters.
