@@ -6,9 +6,8 @@ const expectedHeaders: Record<string, RegExp> = {
   "referrer-policy": /^strict-origin-when-cross-origin$/,
   "permissions-policy": /^camera=\(\), microphone=\(\), geolocation=\(\)$/,
   "x-frame-options": /^DENY$/,
-  // Enforced: framing only. The full policy is report-only until it has run clean in production.
-  "content-security-policy": /^frame-ancestors 'none'$/,
-  "content-security-policy-report-only": /default-src 'self';.*object-src 'none';.*base-uri 'self';.*frame-ancestors 'none'/
+  // Enforced (report-only only on Vercel Preview, which this suite never targets).
+  "content-security-policy": /default-src 'self';.*script-src 'self' 'unsafe-inline';.*object-src 'none';.*base-uri 'self';.*form-action 'self';.*frame-ancestors 'none'/
 };
 
 for (const path of ["/", "/museums/louvre-museum", "/api/healthz"]) {
@@ -20,6 +19,7 @@ for (const path of ["/", "/museums/louvre-museum", "/api/healthz"]) {
       expect(headers[name], name).toMatch(pattern);
     }
     expect(headers["x-powered-by"]).toBeUndefined();
+    expect(headers["content-security-policy-report-only"]).toBeUndefined();
   });
 }
 
