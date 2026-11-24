@@ -59,9 +59,10 @@ npm run test:e2e
 
 ## CI Pipeline
 
-GitHub Actions runs five jobs on pull requests and pushes to `main`:
+GitHub Actions runs six jobs on pull requests and pushes to `main`. The workflow has `permissions: contents: read`, and every action is pinned to a commit SHA with its version in a comment; Dependabot (`.github/dependabot.yml`) proposes npm and GitHub Actions updates weekly, minor and patch grouped, after a 3-day cooldown.
 
-0. **Workflow lint** — actionlint validates `.github/workflows/ci.yml` before any job runs.
+0. **Workflow lint** — actionlint (a pinned release, checked against its SHA-256) validates the workflows.
+0. **Dependency audit** — `npm audit --audit-level=high` fails on high or critical advisories.
 1. **Lint** — ESLint static analysis, then `npm run typecheck`.
 2. **Build** — `next build` production validation.
 3. **Unit & component tests** — Vitest (`npm run test`).
