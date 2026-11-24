@@ -31,6 +31,7 @@
 - Made progress writes atomic with a Neon batch transaction ([spec](specs/atomic-progress-writes/spec.md)).
 - One Zod-validated env module (`src/lib/env.ts`): the only `process.env` reader in `src/`, validated at request time so builds need no secrets; the `AUTH_SECRET` development fallback is gone. `AUTH_SECRET` rotated for Production and added for Preview.
 - Sign-in abuse and cost guardrails ([security-guardrails.md](security-guardrails.md)): durable Postgres email caps (recipient, IP, app-wide), honeypot, `AUTH_EMAIL_ENABLED` kill switch, single-use 15-minute hashed magic links behind a click, verify-route IP limit, POST same-origin logout, per-user write cap and body-size limits.
+- Branded `error.tsx` and `global-error.tsx` (no error details, only a digest reference) next to `not-found.tsx`; `/.well-known/security.txt` points at GitHub security advisories.
 - Every API input is validated with a Zod schema (`src/server/payloads.ts`).
 - Sessions moved from a `localStorage` bearer token to a server-side session in an `__Host-` `Secure` `HttpOnly` `SameSite=Lax` cookie, rotated on sign-in and deleted on logout; cookie-authenticated writes require same-origin.
 - Owner monitoring ([monitoring.md](monitoring.md)): `sign_in`/`sign_up` events, a capped sign-up alert email, a daily digest via Vercel Cron, and Vercel Web Analytics.
