@@ -23,6 +23,15 @@ for (const path of ["/", "/museums/louvre-museum", "/api/healthz"]) {
   });
 }
 
+test("publishes security.txt pointing at GitHub security advisories", async ({ request }) => {
+  const response = await request.get("/.well-known/security.txt");
+  expect(response.status()).toBe(200);
+  const body = await response.text();
+  expect(body).toContain("Contact: https://github.com/aydar-ga/museums-eu-atlas/security/advisories/new");
+  expect(body).toMatch(/^Expires: \d{4}-\d{2}-\d{2}T/m);
+  expect(body).not.toMatch(/@/);
+});
+
 test("pages raise no Content-Security-Policy violations", async ({ page }) => {
   await page.addInitScript(() => {
     const violations: string[] = [];
