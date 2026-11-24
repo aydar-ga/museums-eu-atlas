@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { verifyLinkLimitPerIp } from "@/server/abuse-limits";
+import { notifyOwnerOfSignUp, recordSignInEvents } from "@/server/auth-events";
 import { forbidden, isSameOriginRequest, readJsonObject, temporarilyUnavailable, tooManyRequests } from "@/server/api-guard";
 import { consumeMagicToken } from "@/server/magicTokens";
 import { checkRateLimits, clientIp, rateLimitKey, rateLimitStoreFor } from "@/server/rateLimit";
@@ -44,6 +45,18 @@ export async function POST(request: NextRequest) {
     // Same answer for a forged, expired, reused or unknown token, and for a database failure.
     return invalidLink();
   }
-  await recordUserSignIn(email);
+  let user;
+  try {
+    user = await recordUserSignIn(runner, email, nowMs);
+  } catch {
+    return temporarilyUnavailable();
+  }
+  if (runner && user) {
+    // Monitoring is best effort: a failed event row or alert never blocks the sign-in.
+    await recordSignInEvents(runner, user, nowMs).catch(() => undefined);
+    if (user.isNew) {
+      await notifyOwnerOfSignUp(runner, email, nowMs).catch(() => false);
+    }
+  }
   return NextResponse.json({ email, sessionToken: createSessionToken(email) });
 }

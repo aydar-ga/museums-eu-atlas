@@ -36,6 +36,9 @@ export const verifyLinkLimitPerIp = { limit: 20, windowMs: 10 * minute } as cons
 /** Authenticated writes (progress, saved routes), per user per day, durable. */
 export const writeLimitPerUser = { limit: 300, windowMs: day } as const;
 
+/** Owner sign-up alerts, durable. Beyond this the daily digest still reports every sign-up. */
+export const ownerAlertLimit = { limit: 10, windowMs: day } as const;
+
 /** Magic links expire after 15 minutes and work once. */
 export const magicLinkLifetimeMs = 15 * minute;
 

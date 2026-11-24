@@ -54,6 +54,38 @@ describe("POST /api/auth/verify-link", () => {
     expect(await second.json()).toEqual({ error: "Magic link is invalid or expired." });
   });
 
+  it("logs sign_up and sign_in, and alerts the owner once per new account", async () => {
+    vi.stubEnv("AUTH_EMAIL_ENABLED", "true");
+    vi.stubEnv("RESEND_API_KEY", "re_test");
+    vi.stubEnv("AUTH_EMAIL_FROM", "ArtMuse <login@artmuse.app>");
+    vi.stubEnv("OWNER_ALERT_EMAIL", "owner@example.com");
+    const fetchMock = vi.fn(async () => new Response("{}", { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    expect((await POST(verify(await issue()))).status).toBe(200);
+    expect((await POST(verify(await issue()))).status).toBe(200);
+
+    const kinds = await database.query("select kind from auth_events where kind like 'sign_%' order by id");
+    expect(kinds.map((row) => row.kind)).toEqual(["sign_in", "sign_up", "sign_in"]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+  });
+
+  it("still signs in when the owner alert fails", async () => {
+    vi.stubEnv("AUTH_EMAIL_ENABLED", "true");
+    vi.stubEnv("RESEND_API_KEY", "re_test");
+    vi.stubEnv("AUTH_EMAIL_FROM", "ArtMuse <login@artmuse.app>");
+    vi.stubEnv("OWNER_ALERT_EMAIL", "owner@example.com");
+    vi.stubGlobal("fetch", vi.fn(async () => {
+      throw new Error("Resend is down");
+    }));
+
+    expect((await POST(verify(await issue()))).status).toBe(200);
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+  });
+
   it("refuses a correctly signed token that was never issued", async () => {
     expect((await POST(verify(createMagicToken("visitor@example.com")))).status).toBe(400);
   });

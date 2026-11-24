@@ -18,6 +18,9 @@ import { getDatabaseUrlFromEnv } from "./vercel-build";
 /** True for `next build` output, including Vercel Preview and Production. Dev-only helpers check it. */
 export const isProductionBuild = process.env.NODE_ENV === "production";
 
+/** True while building or running on Vercel. Server components only: it is not inlined into client code. */
+export const isVercelBuild = process.env.VERCEL === "1";
+
 function serverSchema() {
   // Built lazily, so a client component importing only `isProductionBuild` does not bundle Zod.
   /** Unset and whitespace-only values both mean "not configured". */
@@ -44,6 +47,8 @@ function serverSchema() {
     ),
     RESEND_API_KEY: optionalString,
     AUTH_EMAIL_FROM: optionalString,
+    OWNER_ALERT_EMAIL: optionalString,
+    CRON_SECRET: optionalString,
     // Kill switch: only the exact string "true" lets the app send email. Anything else means off.
     AUTH_EMAIL_ENABLED: z
       .string()

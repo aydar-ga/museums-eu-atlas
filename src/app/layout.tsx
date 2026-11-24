@@ -3,7 +3,10 @@ import { Roboto_Mono } from "next/font/google";
 import Script from "next/script";
 import type { ReactNode } from "react";
 
+import { Analytics } from "@vercel/analytics/next";
+
 import { ClientShell } from "@/components/ClientShell";
+import { isVercelBuild } from "@/lib/env";
 import { rootMetadata } from "@/lib/site";
 import "./globals.css";
 
@@ -69,6 +72,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <body className={robotoMono.className}>
         <ClientShell>{children}</ClientShell>
+        {/* Vercel Web Analytics: cookieless page views, same-origin script. Only on Vercel deployments. */}
+        {isVercelBuild ? <Analytics /> : null}
       </body>
     </html>
   );

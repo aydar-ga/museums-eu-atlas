@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { emailDelivery, isVercelDeployment, serverEnv } from "@/lib/env";
 import { forbidden, isSameOriginRequest, readJsonObject, temporarilyUnavailable, tooManyRequests } from "@/server/api-guard";
+import { sendEmail } from "@/server/email";
 import { hashIdentifier, reserveEmailSend } from "@/server/email-guard";
 import { createMagicToken, isValidEmail, recordIssuedMagicToken } from "@/server/magicTokens";
 import {
@@ -19,25 +20,13 @@ const emailUnavailableMessage =
   "Email sign-in isn't available yet. Your museum progress stays saved in this browser.";
 const tooManyMessage = "Too many sign-in requests. Try again later.";
 
-async function sendWithResend(delivery: { apiKey: string; from: string }, email: string, magicLink: string): Promise<void> {
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${delivery.apiKey}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      from: delivery.from,
-      to: email,
-      subject: "Your ArtMuse sign-in link",
-      text: `Sign in to ArtMuse: ${magicLink}\n\nThe link works once and expires in 15 minutes. If you did not ask for it, ignore this email.`,
-      html: `<p>Here is your ArtMuse sign-in link:</p><p><a href="${magicLink}">Sign in to ArtMuse</a></p><p>The link works once and expires in 15 minutes. If you did not ask for it, ignore this email.</p>`
-    })
+function sendSignInLink(delivery: { apiKey: string; from: string }, email: string, magicLink: string): Promise<void> {
+  return sendEmail(delivery, {
+    to: email,
+    subject: "Your ArtMuse sign-in link",
+    text: `Sign in to ArtMuse: ${magicLink}\n\nThe link works once and expires in 15 minutes. If you did not ask for it, ignore this email.`,
+    html: `<p>Here is your ArtMuse sign-in link:</p><p><a href="${magicLink}">Sign in to ArtMuse</a></p><p>The link works once and expires in 15 minutes. If you did not ask for it, ignore this email.</p>`
   });
-
-  if (!response.ok) {
-    throw new Error("Email provider rejected the magic link request.");
-  }
 }
 
 /**
@@ -113,7 +102,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ email, magicLink, delivery: "dev" });
   }
   try {
-    await sendWithResend(delivery, email, magicLink);
+    await sendSignInLink(delivery, email, magicLink);
   } catch {
     return NextResponse.json({ error: "Could not send the magic link email. Try again later." }, { status: 502 });
   }

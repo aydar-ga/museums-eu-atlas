@@ -53,6 +53,8 @@ Supported variables:
 - `AUTH_EMAIL_ENABLED` - kill switch; deployments send sign-in email only when it is exactly `true`.
 - `RESEND_API_KEY` - optional email delivery.
 - `AUTH_EMAIL_FROM` - optional sender address for email delivery.
+- `OWNER_ALERT_EMAIL` - receives sign-up alerts and the daily digest ([monitoring.md](monitoring.md)).
+- `CRON_SECRET` - Bearer secret Vercel Cron sends to `/api/cron/digest`; without it the route answers 401.
 - `GIT_COMMIT` - optional commit id that `/api/healthz` reports outside Vercel.
 - `APP_BASE_URL` - optional Playwright target for an already running app.
 
