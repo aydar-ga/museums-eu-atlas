@@ -10,10 +10,18 @@ test("a visitor reaches the feedback form from the footer and sends a message wi
   });
 
   await page.goto("/");
-  await page.getByTestId("footer-feedback-link").click();
-  await expect(page).toHaveURL(/\/feedback\/?$/);
-  await expect(page.getByRole("heading", { level: 1, name: "Say hello" })).toBeVisible();
+  const link = page.getByTestId("footer-feedback-link");
+  await link.click();
+  const dialog = page.getByRole("dialog", { name: "Feedback" });
+  await expect(dialog).toBeVisible();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(dialog.getByRole("heading", { level: 2, name: "Say hello" })).toBeVisible();
   await expect(page.locator("body")).not.toContainText("@gmail.com");
+
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+  await expect(link).toBeFocused();
+  await link.click();
 
   await page.getByTestId("feedback-kind-bug").check();
   await page.getByTestId("feedback-submit").click();

@@ -102,6 +102,27 @@ describe("reserveEmailSend logging", () => {
     expect(await countKind("link_blocked")).toBe(1000);
   });
 
+  it("logs a refusal by the app-wide daily cap as link_blocked_app, so the daily check can alert", async () => {
+    const limit = emailSendLimits.appPerDay.limit;
+    await attempts(limit + 1, (i) => [`user${i}@example.com`, `10.0.${i}.1`, t0 + i * minute]);
+    expect(await countKind("link_blocked_app")).toBe(1);
+    expect(await countKind("link_blocked")).toBe(0);
+  });
+
+  it("logs a refusal by the 31-day cap as link_blocked_app", async () => {
+    await database.query(`insert into auth_events (kind, email_hash, ip_hash, created_at)
+      select 'link_requested', 'seed' || n, 'seed', '2026-11-24T12:00:00Z'::timestamptz - (n % 29 + 1) * interval '1 day'
+      from generate_series(1, ${emailSendLimits.appPerMonth.limit}) n`);
+    expect(await attempt("over@example.com", "10.9.9.8", t0)).toBe("blocked");
+    expect(await countKind("link_blocked_app")).toBe(1);
+  });
+
+  it("keeps per-recipient and per-IP refusals as link_blocked", async () => {
+    await attempts(4, (i) => ["a@example.com", `10.0.0.${i}`, t0 + i]);
+    expect(await countKind("link_blocked")).toBe(1);
+    expect(await countKind("link_blocked_app")).toBe(0);
+  });
+
   it("prunes events older than 35 days and expired tokens", async () => {
     await database.query(`insert into auth_events (kind, created_at) values ('link_requested', '2026-10-01T00:00:00Z')`);
     await database.query(`insert into magic_link_tokens (token_hash, expires_at) values ('old', '2026-11-01T00:00:00Z')`);

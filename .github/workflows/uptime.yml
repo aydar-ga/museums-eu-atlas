@@ -14,6 +14,7 @@ on:
     branches-ignore: [main]
     paths:
       - scripts/uptime-check.sh
+      - scripts/uptime-issue.sh
       - .github/workflows/uptime.yml
 
 permissions:
@@ -36,6 +37,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The token (issues: write) is passed only to the issue step, not left in .git/config for the scripts.
+          persist-credentials: false
 
       - name: Run checks
         id: check
@@ -47,38 +51,14 @@ jobs:
           cat report.md >> "$GITHUB_STEP_SUMMARY"
           if [ "$status" -ne 0 ]; then echo "failed=true" >> "$GITHUB_OUTPUT"; else echo "failed=false" >> "$GITHUB_OUTPUT"; fi
 
-      - name: Open the outage issue, or update it on deep runs
-        if: steps.check.outputs.failed == 'true' && env.MANAGE_ISSUES == 'true'
+      # The run stays green while the site is down, so GitHub sends no "run failed" email every 15 minutes.
+      # The issue is the alert: opened once per outage, then updated silently (scripts/uptime-issue.sh).
+      - name: Keep the outage issue in step
+        if: env.MANAGE_ISSUES == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          OWNER: ${{ github.repository_owner }}
+          FAILED: ${{ steps.check.outputs.failed }}
         run: |
-          gh label create uptime --color B60205 --description "Opened and closed by the Uptime workflow" --force
-          gh label create uptime-deep --color D93F0B --description "Failed a database, TLS or domain check" --force
-          number="$(gh issue list --label uptime --state open --json number --jq '.[0].number // empty')"
-          # A page failure is seen by every run; a failure seen only by a deep run needs a deep run to clear.
-          labels="uptime"
-          if [ "$DEEP" = "true" ] && ! grep -E '^[|] (Home page|Museum page|robots.txt|sitemap.xml) [|] FAIL' report.md >/dev/null; then
-            labels="uptime,uptime-deep"
-          fi
-          if [ -z "$number" ]; then
-            gh issue create --title "artmuse.app is failing its uptime checks" --label "$labels" --body-file report.md
-          elif [ "$DEEP" = "true" ]; then
-            gh issue edit "$number" --add-label "$labels"
-            gh issue comment "$number" --body-file report.md
-          fi
-
-      - name: Close the outage issue on recovery
-        if: steps.check.outputs.failed == 'false' && env.MANAGE_ISSUES == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          number="$(gh issue list --label uptime --state open --json number --jq '.[0].number // empty')"
-          [ -n "$number" ] || exit 0
-          deep_only="$(gh issue view "$number" --json labels --jq '[.labels[].name] | index("uptime-deep") != null')"
-          # A pages-only pass does not prove that a database, TLS or domain failure is over.
-          if [ "$deep_only" = "true" ] && [ "$DEEP" != "true" ]; then exit 0; fi
-          gh issue close "$number" --comment "Recovered: every check passes again. $(tail -n 1 report.md)"
-
-      - name: Fail the run when a check failed
-        if: steps.check.outputs.failed == 'true'
-        run: exit 1
+          if [ "$FAILED" = "true" ]; then outcome=failed; else outcome=ok; fi
+          scripts/uptime-issue.sh "$outcome" report.md

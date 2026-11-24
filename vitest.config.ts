@@ -12,6 +12,9 @@ export default defineConfig({
     setupFiles: ["src/test/setup.ts"],
     // A test-only signing key; the app has no fallback secret. Tests stub AUTH_SECRET to "" to cover the missing case.
     env: { AUTH_SECRET: "vitest-only-auth-secret" },
+    // Route tests boot an in-memory Postgres (PGlite) in beforeAll; with every file running at once that can
+    // take longer than the 10 s default on a busy machine.
+    hookTimeout: 30_000,
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
     exclude: ["tests/**", "node_modules/**", ".next/**"],
     coverage: {

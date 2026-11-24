@@ -49,6 +49,10 @@ export type DigestCounts = {
   signIns: number;
   linkRequests: number;
   blocked: number;
+  /** Of `blocked`, the requests an app-wide cap refused: real visitors who got no link. */
+  appBlocked: number;
+  /** Feedback messages stored but not emailed, because the owner-alert cap was used up. */
+  feedbackAlertsSkipped: number;
   totalUsers: number;
 };
 
@@ -59,7 +63,9 @@ export async function digestCounts(runner: SqlRunner, nowMs: number): Promise<Di
       count(*) filter (where kind = 'sign_up')::int as sign_ups,
       count(*) filter (where kind = 'sign_in')::int as sign_ins,
       count(*) filter (where kind = 'link_requested')::int as link_requests,
-      count(*) filter (where kind = 'link_blocked')::int as blocked,
+      count(*) filter (where kind in ('link_blocked', 'link_blocked_app'))::int as blocked,
+      count(*) filter (where kind = 'link_blocked_app')::int as app_blocked,
+      count(*) filter (where kind = 'feedback_alert_skipped')::int as feedback_alerts_skipped,
       (select count(*)::int from users) as total_users
     from auth_events where created_at > ${since}::timestamptz`);
   const row = rows[0] ?? {};
@@ -68,6 +74,8 @@ export async function digestCounts(runner: SqlRunner, nowMs: number): Promise<Di
     signIns: Number(row.sign_ins ?? 0),
     linkRequests: Number(row.link_requests ?? 0),
     blocked: Number(row.blocked ?? 0),
+    appBlocked: Number(row.app_blocked ?? 0),
+    feedbackAlertsSkipped: Number(row.feedback_alerts_skipped ?? 0),
     totalUsers: Number(row.total_users ?? 0)
   };
 }
@@ -79,7 +87,7 @@ export function digestText(counts: DigestCounts, nowMs: number): string {
     `Sign-ups: ${counts.signUps}`,
     `Sign-ins: ${counts.signIns}`,
     `Sign-in links sent: ${counts.linkRequests}`,
-    `Blocked link requests: ${counts.blocked}`,
+    `Blocked link requests: ${counts.blocked} (by an app-wide cap: ${counts.appBlocked})`,
     `Total accounts: ${counts.totalUsers}`
   ].join("\n");
 }

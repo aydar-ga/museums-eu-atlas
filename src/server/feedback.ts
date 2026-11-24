@@ -48,6 +48,9 @@ export async function notifyOwnerOfFeedback(runner: SqlRunner, input: FeedbackIn
   }
   const limit = await checkRateLimits(createDbRateLimitStore(runner), [{ key: "owner-alert:feedback", ...feedbackAlertLimit }], nowMs);
   if (!limit.allowed) {
+    // Recorded so the daily check can tell the owner some messages were never emailed. Bounded by the
+    // app-wide feedback cap (feedbackLimits.appPerDay), since only stored messages reach this point.
+    await runner.execute(sql`insert into auth_events (kind, created_at) values ('feedback_alert_skipped', ${new Date(nowMs).toISOString()}::timestamptz)`);
     return false;
   }
   const when = new Date(nowMs).toISOString().replace("T", " ").slice(0, 16);

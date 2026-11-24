@@ -570,7 +570,40 @@ select.filter-input {
 
 .museum-image-link {
     color: inherit;
+    display: block;
+    position: relative;
     text-decoration: none;
+}
+
+/* Scratch-off reveal: marking a museum visited wipes a gold foil off its image, like a scratch poster. */
+.scratch-foil {
+    animation: scratch-off 0.9s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+    background:
+        repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.16) 0 2px, transparent 2px 9px),
+        linear-gradient(135deg, #7d5c17 0%, #c79a3b 24%, #f4e2a1 46%, #d9b45a 62%, #8a6a1f 100%);
+    inset: 0;
+    pointer-events: none;
+    position: absolute;
+}
+
+@keyframes scratch-off {
+    0% {
+        clip-path: inset(0 0 0 0);
+    }
+
+    15% {
+        clip-path: inset(0 0 0 0);
+    }
+
+    100% {
+        clip-path: inset(0 0 0 100%);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .scratch-foil {
+        display: none;
+    }
 }
 
 .museum-image {
@@ -1353,6 +1386,34 @@ select.filter-input {
 
 .feedback-form textarea:focus {
     background: var(--panel-strong);
+}
+
+.feedback-actions {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.secondary-action {
+    background: transparent;
+    color: var(--muted);
+}
+
+.secondary-action:hover {
+    color: var(--text);
+}
+
+.feedback-back {
+    color: var(--muted);
+    display: inline-block;
+    font-size: 13px;
+    margin-bottom: 12px;
+}
+
+.feedback-panel h2 {
+    font-size: 20px;
+    margin-bottom: 8px;
 }
 
 .footer a {

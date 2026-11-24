@@ -1,13 +1,37 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useId, useState } from "react";
 
 import { feedbackKindLabels, feedbackKinds, minFeedbackMessageLength, type FeedbackKind } from "@/lib/feedback";
 import { trackEvent } from "@/lib/product-events";
 
 type Status = { state: "idle" | "sending" } | { state: "sent" } | { state: "error"; message: string };
 
-export function FeedbackForm() {
+type FeedbackFormProps = {
+  /** In the side panel: discard the draft and close. Not shown on the standalone page. */
+  onCancel?: () => void;
+  /** In the side panel: close after the thank-you message. */
+  onDone?: () => void;
+};
+
+/** The shared introduction, used by the /feedback page and the side panel. */
+export function FeedbackIntro({ headingLevel = 1 }: { headingLevel?: 1 | 2 }) {
+  const Heading = headingLevel === 1 ? "h1" : "h2";
+  return (
+    <div className="auth-copy">
+      <Heading>Say hello</Heading>
+      <p className="hero-copy">
+        ArtMuse is a one-person side project. Tell me what you&apos;d change, what broke, or simply that you&apos;d like
+        more of it — that is what decides whether it grows. Your email is optional and used only to reply. Messages are
+        deleted after a year.
+      </p>
+    </div>
+  );
+}
+
+export function FeedbackForm({ onCancel, onDone }: FeedbackFormProps = {}) {
+  // Unique per form: the page and the side panel can both be on screen.
+  const fieldId = useId();
   const [kind, setKind] = useState<FeedbackKind>("interest");
   const [message, setMessage] = useState("");
   const [email, setEmail] = useState("");
@@ -46,6 +70,11 @@ export function FeedbackForm() {
           <strong>Thank you — it reached me.</strong>
         </p>
         <p>{email ? "If a reply makes sense, you'll hear back by email." : "You didn't leave an email, so there will be no reply — and that's fine."}</p>
+        {onDone ? (
+          <button className="secondary-action" type="button" onClick={onDone}>
+            Close
+          </button>
+        ) : null}
       </div>
     );
   }
@@ -67,21 +96,28 @@ export function FeedbackForm() {
         ))}
       </fieldset>
       <div className="auth-field-stack">
-        <label htmlFor="feedback-message">{kind === "interest" ? "Anything to add? (optional)" : "Your message"}</label>
-        <textarea id="feedback-message" name="message" rows={5} maxLength={2000} value={message} onChange={(event) => setMessage(event.target.value)} data-testid="feedback-message" />
+        <label htmlFor={`${fieldId}-message`}>{kind === "interest" ? "Anything to add? (optional)" : "Your message"}</label>
+        <textarea id={`${fieldId}-message`} name="message" rows={5} maxLength={2000} value={message} onChange={(event) => setMessage(event.target.value)} data-testid="feedback-message" />
       </div>
       <div className="auth-field-stack">
-        <label htmlFor="feedback-email">Your email, only if you want a reply (optional)</label>
-        <input id="feedback-email" name="email" type="email" autoComplete="email" inputMode="email" value={email} onChange={(event) => setEmail(event.target.value)} data-testid="feedback-email" />
+        <label htmlFor={`${fieldId}-email`}>Your email, only if you want a reply (optional)</label>
+        <input id={`${fieldId}-email`} name="email" type="email" autoComplete="email" inputMode="email" value={email} onChange={(event) => setEmail(event.target.value)} data-testid="feedback-email" />
       </div>
       {/* Honeypot: hidden from people and assistive tech; bots that fill every field get a fake success. */}
       <div className="visually-hidden" aria-hidden="true">
-        <label htmlFor="feedback-website">Website</label>
-        <input id="feedback-website" name="website" type="text" tabIndex={-1} autoComplete="off" defaultValue="" />
+        <label htmlFor={`${fieldId}-website`}>Website</label>
+        <input id={`${fieldId}-website`} name="website" type="text" tabIndex={-1} autoComplete="off" defaultValue="" />
       </div>
-      <button className="primary-action" type="submit" disabled={status.state === "sending"} data-testid="feedback-submit">
-        {status.state === "sending" ? "Sending..." : "Send"}
-      </button>
+      <div className="feedback-actions">
+        <button className="primary-action" type="submit" disabled={status.state === "sending"} data-testid="feedback-submit">
+          {status.state === "sending" ? "Sending..." : "Send"}
+        </button>
+        {onCancel ? (
+          <button className="secondary-action" type="button" onClick={onCancel}>
+            Cancel
+          </button>
+        ) : null}
+      </div>
     </form>
   );
 }

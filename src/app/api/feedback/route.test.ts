@@ -71,6 +71,16 @@ describe("POST /api/feedback", () => {
     expect(email.text).toContain("replying here reveals this address");
   });
 
+  it("records each alert the owner-alert cap suppresses, so the daily check can report it", async () => {
+    const fetchMock = mockResend();
+    for (let i = 0; i < 11; i += 1) {
+      const response = await POST(send({ kind: "bug", message: `Broken thing number ${i}` }, { "x-real-ip": `203.0.113.${i + 10}` }));
+      expect(response.status).toBe(200);
+    }
+    expect(fetchMock).toHaveBeenCalledTimes(10);
+    expect(await database.query("select count(*)::int as n from auth_events where kind = 'feedback_alert_skipped'")).toEqual([{ n: 1 }]);
+  });
+
   it("accepts a one-click 'I'd like more' without a message or email", async () => {
     mockResend();
     const response = await POST(send({ kind: "interest" }));

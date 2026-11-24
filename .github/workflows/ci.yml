@@ -4,6 +4,8 @@ on:
   pull_request:
   push:
     branches: [main, "feat/**"]
+  # On demand, any branch, e2e included: gh workflow run CI --ref <branch>
+  workflow_dispatch:
 
 permissions:
   contents: read

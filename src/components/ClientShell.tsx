@@ -10,12 +10,19 @@ import { clearUser, readUserEmail, writeUserEmail, authChangedEvent, progressCha
 import type { User } from "@/types";
 import { AccountPanel } from "./AccountPanel";
 import { AuthFlow } from "./AuthFlow";
+import { FeedbackForm, FeedbackIntro } from "./FeedbackForm";
 import { Layout } from "./Layout";
 import { SidePanel } from "./SidePanel";
 import { UtilityRail } from "./UtilityRail";
 import { UtilityRailHost } from "./UtilityRailHost";
 
-type PanelMode = "signin" | "account";
+type PanelMode = "signin" | "account" | "feedback";
+
+const panelLabels: Record<PanelMode, string> = {
+  signin: "Magic link sign up",
+  account: "Account",
+  feedback: "Feedback"
+};
 
 function panelModeFromPath(pathname: string): PanelMode | null {
   if (pathname === "/signup" || pathname === "/login") {
@@ -114,6 +121,11 @@ export function ClientShell({ children }: { children: ReactNode }) {
     setPanelOpen(true);
   }, []);
 
+  const openFeedback = useCallback(() => {
+    setPanelMode("feedback");
+    setPanelOpen(true);
+  }, []);
+
   const logout = useCallback(() => {
     // Best effort: the server endpoint is POST-only and same-origin; local sign-out never waits for it.
     void fetch("/api/auth/logout", { method: "POST" }).catch(() => undefined);
@@ -131,18 +143,21 @@ export function ClientShell({ children }: { children: ReactNode }) {
       <UtilityRailHost>
         <UtilityRail user={user} onSignInOpen={openSignIn} onAccountOpen={openAccount} />
       </UtilityRailHost>
-      <Layout isPanelOpen={panelOpen}>{children}</Layout>
-      <SidePanel
-        open={panelOpen}
-        onClose={closePanel}
-        titleId="side-panel-title"
-        label={panelMode === "signin" ? "Magic link sign up" : "Account"}
-      >
-        {panelMode === "signin" ? (
-          <AuthFlow />
-        ) : (
+      {/* On /feedback the form is already the page, so the footer link stays a plain link there. */}
+      <Layout isPanelOpen={panelOpen} onFeedbackOpen={pathname === "/feedback" ? undefined : openFeedback}>
+        {children}
+      </Layout>
+      <SidePanel open={panelOpen} onClose={closePanel} titleId="side-panel-title" label={panelLabels[panelMode]}>
+        {panelMode === "signin" ? <AuthFlow /> : null}
+        {panelMode === "account" ? (
           <AccountPanel email={user?.email ?? null} onSignInOpen={openSignIn} onLogout={logout} />
-        )}
+        ) : null}
+        {panelMode === "feedback" ? (
+          <div className="feedback-panel">
+            <FeedbackIntro headingLevel={2} />
+            <FeedbackForm onCancel={closePanel} onDone={closePanel} />
+          </div>
+        ) : null}
       </SidePanel>
     </>
   );

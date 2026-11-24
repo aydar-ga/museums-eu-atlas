@@ -1,4 +1,10 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
+
+/** The foil's CSS wipe takes 0.9 s; it is removed just after, also when reduced motion skips the animation. */
+const scratchRevealMs = 1000;
 
 /* eslint-disable @next/next/no-img-element -- Native images preserve the compact card DOM and client fallback behavior. */
 
@@ -23,6 +29,17 @@ export function MuseumCard({
   onTogglePlanned,
   onToggleVisited
 }: MuseumCardProps) {
+  // A gold foil scratched off the image, only when the visitor marks the museum visited (never on load).
+  const [revealing, setRevealing] = useState(false);
+
+  useEffect(() => {
+    if (!revealing) {
+      return;
+    }
+    const timer = window.setTimeout(() => setRevealing(false), scratchRevealMs);
+    return () => window.clearTimeout(timer);
+  }, [revealing]);
+
   return (
     <li
       className={`museum-item${visited ? " visited" : ""}${planned ? " planned" : ""}`}
@@ -51,6 +68,9 @@ export function MuseumCard({
             }
           }}
         />
+        {revealing ? (
+          <span className="scratch-foil" aria-hidden="true" data-testid={`scratch-foil-${museum.slug}`} />
+        ) : null}
       </Link>
       <div className="museum-content">
         <div className="museum-heading">
@@ -80,7 +100,10 @@ export function MuseumCard({
           data-id={museum.slug}
           data-testid={`visit-toggle-${museum.slug}`}
           aria-pressed={visited}
-          onClick={() => onToggleVisited(museum.slug)}
+          onClick={() => {
+            setRevealing(!visited);
+            onToggleVisited(museum.slug);
+          }}
         >
           {visited ? "Visited" : "Mark visited"}
         </button>

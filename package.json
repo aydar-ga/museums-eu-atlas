@@ -16,6 +16,7 @@
     "test:unit": "vitest run --config vitest.config.ts src/lib src/data",
     "test:component": "vitest run --config vitest.config.ts src/**/*.test.tsx",
     "test:e2e": "playwright test",
+    "test:e2e:local": "node scripts/e2e-local.mjs",
     "generate:favicons": "node scripts/generate-favicons.mjs",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",

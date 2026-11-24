@@ -3,10 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { emailDelivery, serverEnv } from "@/lib/env";
 import { temporarilyUnavailable, unauthorized } from "@/server/api-guard";
-import { digestCounts, digestText } from "@/server/auth-events";
+import { emailSendLimits, feedbackAlertLimit, productEventLimits } from "@/server/abuse-limits";
+import { digestCounts, digestText, type DigestCounts } from "@/server/auth-events";
 import { sendEmail } from "@/server/email";
 import { feedbackCounts, pruneFeedback, type FeedbackCounts } from "@/server/feedback";
-import { pruneProductEvents, recentProductEvents, type ProductEventCount } from "@/server/product-events";
+import { pruneProductEvents, yesterdayProductEventTotal } from "@/server/product-events";
 import { durableSqlRunner } from "@/server/sql-runner";
 
 /** Vercel Cron sends `Authorization: Bearer $CRON_SECRET`. Without a configured secret nothing is allowed. */
@@ -19,21 +20,33 @@ function isAuthorizedCron(request: NextRequest): boolean {
   return timingSafeEqual(digest(request.headers.get("authorization") ?? ""), digest(`Bearer ${secret}`));
 }
 
-/** The feedback and product-event sections appended to the sign-in digest. */
-export function activityText(feedback: FeedbackCounts, events: ProductEventCount[]): string {
-  const lines = ["", `Feedback messages: ${feedback.messages} (of them "I'd like more": ${feedback.interest})`];
-  if (events.length > 0) {
-    lines.push("", "Visitor actions yesterday (UTC day, anonymous counts):");
-    for (const event of events) {
-      lines.push(`  ${event.name}${event.subject ? ` · ${event.subject}` : ""}: ${event.count}`);
-    }
+/**
+ * What needs the owner's attention: only refusals that turned real visitors away, and dropped data.
+ * Each is recorded when it happens (auth_events kinds `link_blocked_app` and `feedback_alert_skipped`), so the
+ * check never guesses from totals whose window differs from the cap's. An empty list means no email.
+ */
+export function attentionReasons(counts: DigestCounts, eventsYesterday: number): string[] {
+  const reasons: string[] = [];
+  if (counts.appBlocked > 0) {
+    reasons.push(
+      `The app-wide sign-in email cap refused ${counts.appBlocked} sign-in requests (${emailSendLimits.appPerDay.limit} a day, ` +
+        `${emailSendLimits.appPerMonth.limit} per 31 days): those visitors got no link.`
+    );
   }
-  return lines.join("\n");
+  if (counts.feedbackAlertsSkipped > 0) {
+    reasons.push(
+      `${counts.feedbackAlertsSkipped} feedback messages were not emailed (alert cap: ${feedbackAlertLimit.limit} a day). Read them in feedback_messages.`
+    );
+  }
+  if (eventsYesterday >= productEventLimits.appEventsPerDay) {
+    reasons.push(`The visitor-action counts reached their daily cap (${productEventLimits.appEventsPerDay}); later actions were dropped.`);
+  }
+  return reasons;
 }
 
 /**
- * Daily owner digest (vercel.json cron, 07:00 UTC). Sends only when something happened in the last 24 hours.
- * Also prunes feedback and product-event rows past their retention.
+ * Daily check (vercel.json cron, 07:00 UTC). Emails the owner only when something needs attention
+ * (`attentionReasons`); a normal day sends nothing. Always prunes feedback and product-event rows past retention.
  */
 export async function GET(request: NextRequest) {
   if (!isAuthorizedCron(request)) {
@@ -50,28 +63,29 @@ export async function GET(request: NextRequest) {
   } catch {
     return temporarilyUnavailable();
   }
-  // Feedback and visitor actions are extras: a failure here must not stop the sign-in digest.
+  // Feedback and visitor actions are extras: a failure here must not stop the sign-in check.
   let feedback: FeedbackCounts = { messages: 0, interest: 0 };
-  let events: ProductEventCount[] = [];
+  let eventsYesterday = 0;
   try {
     feedback = await feedbackCounts(runner, nowMs);
-    events = await recentProductEvents(runner, nowMs);
+    eventsYesterday = await yesterdayProductEventTotal(runner, nowMs);
     await pruneFeedback(runner, nowMs);
     await pruneProductEvents(runner, nowMs);
   } catch {
-    // Reported as zero; the next run retries.
+    // Treated as zero; the next run retries.
   }
 
-  const happened = counts.signUps + counts.signIns + counts.linkRequests + counts.blocked + feedback.messages + events.length > 0;
+  const reasons = attentionReasons(counts, eventsYesterday);
   const delivery = emailDelivery();
   const to = serverEnv().OWNER_ALERT_EMAIL;
-  if (!happened || !delivery || !to) {
-    return NextResponse.json({ sent: false, counts, feedback });
+  if (reasons.length === 0 || !delivery || !to) {
+    return NextResponse.json({ sent: false, reasons, counts, feedback });
   }
+  const text = ["Something needs a look:", ...reasons.map((reason) => `- ${reason}`), "", digestText(counts, nowMs)].join("\n");
   try {
-    await sendEmail(delivery, { to, subject: `ArtMuse daily: ${counts.signUps} sign-ups, ${feedback.messages} messages`, text: digestText(counts, nowMs) + activityText(feedback, events) });
+    await sendEmail(delivery, { to, subject: `ArtMuse needs a look: ${reasons.length} ${reasons.length === 1 ? "issue" : "issues"}`, text });
   } catch {
-    return NextResponse.json({ sent: false, counts, feedback }, { status: 502 });
+    return NextResponse.json({ sent: false, reasons, counts, feedback }, { status: 502 });
   }
-  return NextResponse.json({ sent: true, counts, feedback });
+  return NextResponse.json({ sent: true, reasons, counts, feedback });
 }

@@ -36,7 +36,7 @@ export const verifyLinkLimitPerIp = { limit: 20, windowMs: 10 * minute } as cons
 /** Authenticated writes (progress, saved routes), per user per day, durable. */
 export const writeLimitPerUser = { limit: 300, windowMs: day } as const;
 
-/** Owner sign-up alerts, durable. Beyond this the daily digest still reports every sign-up. */
+/** Owner sign-up alerts, durable. Beyond this, sign-ups are only recorded in auth_events. */
 export const ownerAlertLimit = { limit: 10, windowMs: day } as const;
 
 /** Magic links expire after 15 minutes and work once. */
@@ -50,7 +50,7 @@ export const maxEmailLength = 254;
 
 /**
  * Visitor feedback (POST /api/feedback), durable, counted over stored messages. A message over a cap is refused
- * with 429. Owner alert emails are capped separately; the daily digest still counts every stored message.
+ * with 429. Owner alert emails are capped separately (feedbackAlertLimit).
  */
 export const feedbackLimits = {
   perIpPerHour: { limit: 5, windowMs: hour },
@@ -61,7 +61,7 @@ export const feedbackLimits = {
 /** Cheap per-instance first layer in front of the durable feedback caps. */
 export const feedbackMemoryLimitPerIp = { limit: 5, windowMs: 15 * minute } as const;
 
-/** Owner emails about feedback, durable. Beyond this, messages are stored and counted in the digest only. */
+/** Owner emails about feedback, durable. Beyond this, messages are stored, and the daily check says how many were not emailed. */
 export const feedbackAlertLimit = { limit: 10, windowMs: day } as const;
 
 export const maxFeedbackMessageLength = 2000;

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
-import { FeedbackForm } from "@/components/FeedbackForm";
+import { FeedbackForm, FeedbackIntro } from "@/components/FeedbackForm";
 import { baseOpenGraph } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -13,14 +14,10 @@ export const metadata: Metadata = {
 export default function FeedbackPage() {
   return (
     <section className="auth-shell feedback-shell" data-testid="feedback-page">
-      <div className="auth-copy">
-        <h1>Say hello</h1>
-        <p className="hero-copy">
-          ArtMuse is a one-person side project. Tell me what you'd change, what broke, or simply that you'd like more
-          of it — that is what decides whether it grows. Your email is optional and used only to reply. Messages
-          are deleted after a year.
-        </p>
-      </div>
+      <Link href="/" className="feedback-back">
+        Back to the atlas
+      </Link>
+      <FeedbackIntro />
       <FeedbackForm />
     </section>
   );

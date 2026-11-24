@@ -30,14 +30,11 @@ export async function recordProductEvents(runner: SqlRunner, events: ProductEven
   return rows.length;
 }
 
-export type ProductEventCount = { name: string; subject: string; count: number };
-
-/** Yesterday's counters (the last complete UTC day), largest first: what the daily digest reports. */
-export async function recentProductEvents(runner: SqlRunner, nowMs: number, limit = 15): Promise<ProductEventCount[]> {
-  const { rows } = await runner.execute(sql`select name, subject, count
-    from product_event_counts where day = ${utcDay(nowMs - 24 * 60 * 60 * 1000)}::date
-    order by count desc, name, subject limit ${limit}::int`);
-  return rows.map((row) => ({ name: String(row.name), subject: String(row.subject ?? ""), count: Number(row.count ?? 0) }));
+/** Yesterday's total (the last complete UTC day). The daily digest alerts when it reached the daily cap. */
+export async function yesterdayProductEventTotal(runner: SqlRunner, nowMs: number): Promise<number> {
+  const { rows } = await runner.execute(sql`select coalesce(sum(count), 0)::int as total
+    from product_event_counts where day = ${utcDay(nowMs - 24 * 60 * 60 * 1000)}::date`);
+  return Number(rows[0]?.total ?? 0);
 }
 
 /** Deletes counters older than the retention period. Run by the daily digest cron. */

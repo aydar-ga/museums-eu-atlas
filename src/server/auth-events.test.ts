@@ -69,13 +69,16 @@ describe("digestCounts", () => {
     await recordSignInEvents(database.runner, { userId: oldUser!.userId, isNew: false }, t0 - 30_000);
     await recordSignInEvents(database.runner, { userId: oldUser!.userId, isNew: true }, t0 - 2 * 86_400_000);
     await database.query(`insert into auth_events (kind, created_at) values
-      ('link_requested', '2026-11-24T10:00:00Z'), ('link_blocked', '2026-11-24T10:00:00Z'), ('link_requested', '2026-11-22T10:00:00Z')`);
+      ('link_requested', '2026-11-24T10:00:00Z'), ('link_blocked', '2026-11-24T10:00:00Z'), ('link_requested', '2026-11-22T10:00:00Z'),
+      ('link_blocked_app', '2026-11-24T10:00:00Z'), ('link_blocked_app', '2026-11-22T10:00:00Z'), ('feedback_alert_skipped', '2026-11-24T10:00:00Z')`);
 
     expect(await digestCounts(database.runner, t0)).toEqual({
       signUps: 1,
       signIns: 2,
       linkRequests: 1,
-      blocked: 1,
+      blocked: 2,
+      appBlocked: 1,
+      feedbackAlertsSkipped: 1,
       totalUsers: 2
     });
   });
