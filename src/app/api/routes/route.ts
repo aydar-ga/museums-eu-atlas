@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getAuthenticatedEmail } from "@/server/auth-request";
-import { maxRouteNameLength, parseMuseumSlugList, parseRouteName, readJsonBody } from "@/server/payloads";
+import { readJsonObject, requireSession, requireWriteSession } from "@/server/api-guard";
+import { maxRouteNameLength, parseMuseumSlugList, parseRouteName } from "@/server/payloads";
 import { createSavedRoute, listSavedRoutes } from "@/server/routes";
 import { getDb } from "@/db";
 
 export async function GET(request: NextRequest) {
-  const email = getAuthenticatedEmail(request);
-  if (!email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = requireSession(request);
+  if (!session.ok) {
+    return session.response;
   }
+  const email = session.value;
   if (!getDb()) {
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
   }
@@ -19,17 +20,21 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const email = getAuthenticatedEmail(request);
-  if (!email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireWriteSession(request);
+  if (!session.ok) {
+    return session.response;
   }
+  const email = session.value;
   if (!getDb()) {
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
   }
 
-  const body = await readJsonBody(request);
-  const name = parseRouteName(body?.name);
-  const museumSlugs = parseMuseumSlugList(body?.museumSlugs);
+  const parsed = await readJsonObject(request);
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+  const name = parseRouteName(parsed.value.name);
+  const museumSlugs = parseMuseumSlugList(parsed.value.museumSlugs);
   if (!name || !museumSlugs || museumSlugs.length === 0) {
     return NextResponse.json(
       {

@@ -107,6 +107,25 @@ test("opens account for an already signed-in test user", async ({ page }) => {
   await expect(page.getByTestId("utility-rail").getByTestId("login-link")).toBeVisible();
 });
 
+test("signs in with a magic link that works once", async ({ page }) => {
+  await page.goto("/signup");
+  await page.getByTestId("auth-email").fill("e2e-link@example.com");
+  await page.getByTestId("auth-submit").click();
+  const href = await page.getByTestId("magic-link-open").getAttribute("href");
+  expect(href).toContain("/magic-link?token=");
+  const linkPath = new URL(href ?? "", "http://localhost").pathname + new URL(href ?? "", "http://localhost").search;
+
+  await page.goto(linkPath);
+  await page.getByTestId("magic-link-continue").click();
+  await expect(page).toHaveURL(/\/account$/);
+  await expect(page.getByTestId("account-email")).toHaveText("e2e-link@example.com");
+
+  // The same link cannot sign anyone in a second time.
+  await page.goto(linkPath);
+  await page.getByTestId("magic-link-continue").click();
+  await expect(page.getByTestId("magic-link-error")).toHaveText("Magic link is invalid or expired.");
+});
+
 test("utility rail stays fixed while scrolling", async ({ page }) => {
   await page.goto("/");
   const before = await page.getByTestId("utility-rail-host").boundingBox();

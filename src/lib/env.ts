@@ -43,7 +43,12 @@ function serverSchema() {
         .optional()
     ),
     RESEND_API_KEY: optionalString,
-    AUTH_EMAIL_FROM: optionalString
+    AUTH_EMAIL_FROM: optionalString,
+    // Kill switch: only the exact string "true" lets the app send email. Anything else means off.
+    AUTH_EMAIL_ENABLED: z
+      .string()
+      .optional()
+      .transform((value) => value === "true")
   });
 }
 
@@ -64,6 +69,12 @@ export function isProductionDeployment(): boolean {
   return serverEnv().VERCEL_ENV === "production";
 }
 
+/** True on any Vercel deployment (Production or Preview); false for local `next dev`/`next start`. */
+export function isVercelDeployment(): boolean {
+  const vercelEnv = serverEnv().VERCEL_ENV;
+  return vercelEnv === "production" || vercelEnv === "preview";
+}
+
 /** The HMAC key for magic-link and session tokens. Throws when AUTH_SECRET is missing, in every environment. */
 export function requireAuthSecret(): string {
   const secret = serverEnv().AUTH_SECRET;
@@ -75,11 +86,14 @@ export function requireAuthSecret(): string {
 
 /** Neon/Postgres URL: `DATABASE_URL`, else Vercel's `POSTGRES_URL`, else `POSTGRES_PRISMA_URL`. */
 export function databaseUrl(): string | null {
-  return getDatabaseUrlFromEnv(serverEnv());
+  const { DATABASE_URL, POSTGRES_URL, POSTGRES_PRISMA_URL } = serverEnv();
+  return getDatabaseUrlFromEnv({ DATABASE_URL, POSTGRES_URL, POSTGRES_PRISMA_URL });
 }
 
-/** Resend credentials, or null when email delivery is not configured. */
+/** Resend credentials, or null unless AUTH_EMAIL_ENABLED is "true" and both Resend variables are set. */
 export function emailDelivery(): { apiKey: string; from: string } | null {
   const env = serverEnv();
-  return env.RESEND_API_KEY && env.AUTH_EMAIL_FROM ? { apiKey: env.RESEND_API_KEY, from: env.AUTH_EMAIL_FROM } : null;
+  return env.AUTH_EMAIL_ENABLED && env.RESEND_API_KEY && env.AUTH_EMAIL_FROM
+    ? { apiKey: env.RESEND_API_KEY, from: env.AUTH_EMAIL_FROM }
+    : null;
 }

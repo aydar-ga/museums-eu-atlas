@@ -50,6 +50,7 @@ Supported variables:
 - `DATABASE_URL`, Vercel-provisioned `POSTGRES_URL`, or `POSTGRES_PRISMA_URL` (in that order) - Neon Postgres connection string for Drizzle account persistence.
 - `AUTH_SECRET` - signs magic-link and session tokens. Required wherever sign-in is used, local runs included: there is no fallback, so sign-in answers 503 without it. Generate one with `openssl rand -base64 32`.
 - `PUBLIC_APP_URL` - optional absolute URL for generated magic links.
+- `AUTH_EMAIL_ENABLED` - kill switch; deployments send sign-in email only when it is exactly `true`.
 - `RESEND_API_KEY` - optional email delivery.
 - `AUTH_EMAIL_FROM` - optional sender address for email delivery.
 - `GIT_COMMIT` - optional commit id that `/api/healthz` reports outside Vercel.

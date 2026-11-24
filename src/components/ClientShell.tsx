@@ -115,6 +115,8 @@ export function ClientShell({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
+    // Best effort: the server endpoint is POST-only and same-origin; local sign-out never waits for it.
+    void fetch("/api/auth/logout", { method: "POST" }).catch(() => undefined);
     clearUser();
     setUser(null);
     setPanelOpen(false);

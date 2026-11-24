@@ -30,12 +30,11 @@
 - Validated progress and saved-route payloads against the museum dataset ([spec](specs/api-payload-validation/spec.md)).
 - Made progress writes atomic with a Neon batch transaction ([spec](specs/atomic-progress-writes/spec.md)).
 - One Zod-validated env module (`src/lib/env.ts`): the only `process.env` reader in `src/`, validated at request time so builds need no secrets; the `AUTH_SECRET` development fallback is gone. `AUTH_SECRET` rotated for Production and added for Preview.
+- Sign-in abuse and cost guardrails ([security-guardrails.md](security-guardrails.md)): durable Postgres email caps (recipient, IP, app-wide), honeypot, `AUTH_EMAIL_ENABLED` kill switch, single-use 15-minute hashed magic links behind a click, verify-route IP limit, POST same-origin logout, per-user write cap and body-size limits.
 - Security headers on every path (HSTS, nosniff, Referrer-Policy, Permissions-Policy, `frame-ancestors 'none'`), with the full CSP as Report-Only.
 - Dependencies: Next 16.4, React 19.3, ESLint 10, Vitest 5, TypeScript 6, Playwright 1.65; `npm audit` 25 findings to 0.
 
 ## Near-Term Next Iteration
-
-- Make magic-link tokens single-use (store a token id on verification); today a link can be reused within its 10 minutes.
 
 - Add real email delivery credentials in Vercel project settings (Resend for `artmuse.app` in progress). Until then production sign-in answers 503.
 - Consider Next Image after confirming image optimization costs and behavior on Vercel.

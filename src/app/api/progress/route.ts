@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getAuthenticatedEmail } from "@/server/auth-request";
-import { parseMuseumSlugList, readJsonBody } from "@/server/payloads";
+import { readJsonObject, requireSession, requireWriteSession } from "@/server/api-guard";
+import { parseMuseumSlugList } from "@/server/payloads";
 import { readUserProgress, writeUserProgress } from "@/server/progress";
 import { getDb } from "@/db";
 
 export async function GET(request: NextRequest) {
-  const email = getAuthenticatedEmail(request);
-  if (!email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = requireSession(request);
+  if (!session.ok) {
+    return session.response;
   }
+  const email = session.value;
   if (!getDb()) {
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
   }
@@ -19,17 +20,21 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
-  const email = getAuthenticatedEmail(request);
-  if (!email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireWriteSession(request);
+  if (!session.ok) {
+    return session.response;
   }
+  const email = session.value;
   if (!getDb()) {
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
   }
 
-  const body = await readJsonBody(request);
-  const planned = parseMuseumSlugList(body?.planned);
-  const visited = parseMuseumSlugList(body?.visited);
+  const parsed = await readJsonObject(request);
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+  const planned = parseMuseumSlugList(parsed.value.planned);
+  const visited = parseMuseumSlugList(parsed.value.visited);
   if (!planned || !visited) {
     return NextResponse.json({ error: "Invalid progress payload" }, { status: 400 });
   }

@@ -2,51 +2,45 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 import { verifyMagicLink } from "@/lib/auth";
 import { ensureDevSession } from "@/lib/progress-sync";
 import { writeUserEmail, writeSessionToken, authChangedEvent, progressChangedEvent } from "@/lib/storage";
 
+/**
+ * Links work once, so the page waits for a click before spending the token. Email security scanners
+ * that open links (and React's dev double-render) therefore cannot use it up before the person does.
+ */
 export function MagicLinkClient() {
   const searchParams = useSearchParams();
-  const [error, setError] = useState("");
-  const redirectStartedRef = useRef(false);
   const token = searchParams.get("token") ?? "";
+  const [error, setError] = useState(token ? "" : "Magic link token is missing.");
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const startedRef = useRef(false);
 
-  useEffect(() => {
-    if (!token) {
-      setError("Magic link token is missing.");
+  async function continueSignIn() {
+    if (startedRef.current) {
       return;
     }
-    if (redirectStartedRef.current) {
-      return;
+    startedRef.current = true;
+    setIsSigningIn(true);
+    try {
+      const { email, sessionToken } = await verifyMagicLink(token);
+      writeUserEmail(email);
+      if (sessionToken) {
+        writeSessionToken(sessionToken);
+      } else {
+        await ensureDevSession(email);
+      }
+      window.dispatchEvent(new Event(authChangedEvent));
+      window.dispatchEvent(new Event(progressChangedEvent));
+      window.location.replace("/account");
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Magic link is invalid or expired.");
+      setIsSigningIn(false);
     }
-    let mounted = true;
-    verifyMagicLink(token)
-      .then(async ({ email, sessionToken }) => {
-        writeUserEmail(email);
-        if (sessionToken) {
-          writeSessionToken(sessionToken);
-        } else {
-          await ensureDevSession(email);
-        }
-        window.dispatchEvent(new Event(authChangedEvent));
-        window.dispatchEvent(new Event(progressChangedEvent));
-        if (mounted && !redirectStartedRef.current) {
-          redirectStartedRef.current = true;
-          window.location.replace("/account");
-        }
-      })
-      .catch((requestError: Error) => {
-        if (mounted) {
-          setError(requestError.message);
-        }
-      });
-    return () => {
-      mounted = false;
-    };
-  }, [token]);
+  }
 
   return (
     <section className="auth-shell auth-shell-panel" data-testid="magic-link-page">
@@ -55,7 +49,20 @@ export function MagicLinkClient() {
         {error ? (
           <div className="auth-error-summary" role="alert" data-testid="magic-link-error">{error}</div>
         ) : (
-          <p className="hero-copy" data-testid="magic-link-status">Signing you in...</p>
+          <>
+            <p className="hero-copy" data-testid="magic-link-status">
+              {isSigningIn ? "Signing you in..." : "This link works once. Continue to sign in on this device."}
+            </p>
+            <button
+              type="button"
+              className="primary-action"
+              data-testid="magic-link-continue"
+              onClick={() => void continueSignIn()}
+              disabled={isSigningIn}
+            >
+              {isSigningIn ? "Signing in..." : "Continue to ArtMuse"}
+            </button>
+          </>
         )}
         <p className="auth-switch"><Link href="/signup" data-testid="magic-link-back">Back to sign in</Link></p>
       </div>

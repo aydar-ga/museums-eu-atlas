@@ -46,7 +46,8 @@ async function readErrorMessage(response: Response, fallback: string): Promise<s
   return typeof body?.error === "string" && body.error ? body.error : fallback;
 }
 
-export async function requestMagicLink(email: string): Promise<MagicLinkResponse> {
+/** `website` is the honeypot field: people leave it empty, form bots fill it in. */
+export async function requestMagicLink(email: string, website = ""): Promise<MagicLinkResponse> {
   const normalizedEmail = email.trim().toLocaleLowerCase("en-US");
   if (!isValidEmail(normalizedEmail)) {
     throw new Error("Enter a valid email address.");
@@ -57,7 +58,7 @@ export async function requestMagicLink(email: string): Promise<MagicLinkResponse
     response = await fetch("/api/auth/request-link", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: normalizedEmail })
+      body: JSON.stringify(website ? { email: normalizedEmail, website } : { email: normalizedEmail })
     });
   } catch {
     if (!allowLocalFallback) {

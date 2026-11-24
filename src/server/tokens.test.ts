@@ -48,14 +48,20 @@ describe("token types", () => {
     expect(() => verifyMagicToken(legacy)).toThrow();
   });
 
-  it("expires magic-link tokens after 10 minutes", () => {
+  it("expires magic-link tokens after 15 minutes", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-11-23T12:00:00Z"));
     const token = createMagicToken("visitor@example.com");
-    vi.setSystemTime(new Date("2026-11-23T12:09:59Z"));
+    vi.setSystemTime(new Date("2026-11-23T12:14:59Z"));
     expect(verifyMagicToken(token)).toBe("visitor@example.com");
-    vi.setSystemTime(new Date("2026-11-23T12:10:01Z"));
+    vi.setSystemTime(new Date("2026-11-23T12:15:01Z"));
     expect(() => verifyMagicToken(token)).toThrow(/expired/);
+  });
+
+  it("issues a unique token every time, even for the same email and instant", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-11-23T12:00:00Z"));
+    expect(createMagicToken("visitor@example.com")).not.toBe(createMagicToken("visitor@example.com"));
   });
 });
 

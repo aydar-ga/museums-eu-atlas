@@ -4,13 +4,18 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { writeUserProgress } = vi.hoisted(() => ({ writeUserProgress: vi.fn(async () => undefined) }));
 
+const durable = vi.hoisted(() => ({ runner: null as import("@/server/sql-runner").SqlRunner | null }));
+
 vi.mock("@/db", () => ({ getDb: () => ({}) }));
+vi.mock("@/server/sql-runner", () => ({ durableSqlRunner: () => durable.runner }));
 vi.mock("@/server/progress", () => ({
   readUserProgress: vi.fn(async () => ({ planned: [], visited: [] })),
   writeUserProgress
 }));
 
+import { resetMemoryRateLimitStore } from "@/server/rateLimit";
 import { createSessionToken } from "@/server/sessions";
+import { failingRunner } from "@/test/pglite";
 import { PUT } from "./route";
 
 function put(body: string, token: string | null = createSessionToken("visitor@example.com")) {
@@ -27,6 +32,29 @@ function put(body: string, token: string | null = createSessionToken("visitor@ex
 describe("PUT /api/progress", () => {
   beforeEach(() => {
     writeUserProgress.mockClear();
+    resetMemoryRateLimitStore();
+    durable.runner = null;
+  });
+
+  it("caps each user at 300 writes per day", async () => {
+    const body = JSON.stringify({ planned: [], visited: [] });
+    for (let i = 0; i < 300; i += 1) {
+      expect((await PUT(put(body))).status).toBe(200);
+    }
+    expect((await PUT(put(body))).status).toBe(429);
+    const other = createSessionToken("someone-else@example.com");
+    expect((await PUT(put(body, other))).status).toBe(200);
+  });
+
+  it("refuses the write with 503 when the write counter errors", async () => {
+    durable.runner = failingRunner;
+    expect((await PUT(put(JSON.stringify({ planned: [], visited: [] })))).status).toBe(503);
+    expect(writeUserProgress).not.toHaveBeenCalled();
+  });
+
+  it("refuses bodies over 16 KB with 413", async () => {
+    const response = await PUT(put(JSON.stringify({ planned: ["x".repeat(17 * 1024)], visited: [] })));
+    expect(response.status).toBe(413);
   });
 
   it("returns 401 without a session before looking at the payload", async () => {

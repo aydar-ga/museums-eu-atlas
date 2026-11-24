@@ -21,6 +21,7 @@ The active stack is Next.js App Router, React, TypeScript, static CSS, local ima
 9. `src/app/globals.css` - visual language, RU-style cards, light/dark themes, responsive behavior.
 11. `docs/DECISIONS.md` - why the stack and tooling look this way.
 12. `docs/OPERATIONS.md` - monitoring and rollback policy.
+12a. `docs/security-guardrails.md` - sign-in email caps, kill switch, single-use links, write caps; numbers in `src/server/abuse-limits.ts`.
 13. `docs/ROADMAP.md` - what is intentionally deferred.
 14. `docs/BRANDING.md` - chosen name and domain (ArtMuse, `artmuse.app`) and archived brand, monetisation and UX ideas; not implemented yet.
 15. `docs/owner-actions.md` - open to-dos only the owner can do (dashboards, accounts, decisions). Add to it when you hit one.

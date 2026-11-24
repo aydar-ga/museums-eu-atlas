@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const { deleteSavedRoute } = vi.hoisted(() => ({ deleteSavedRoute: vi.fn(async () => true) }));
 
 vi.mock("@/db", () => ({ getDb: () => ({}) }));
+vi.mock("@/server/sql-runner", () => ({ durableSqlRunner: () => null }));
 vi.mock("@/server/routes", () => ({ deleteSavedRoute }));
 
 import { createSessionToken } from "@/server/sessions";

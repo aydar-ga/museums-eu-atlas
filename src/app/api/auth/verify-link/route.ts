@@ -1,23 +1,49 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { verifyMagicToken } from "@/server/magicTokens";
+import { verifyLinkLimitPerIp } from "@/server/abuse-limits";
+import { forbidden, isSameOriginRequest, readJsonObject, temporarilyUnavailable, tooManyRequests } from "@/server/api-guard";
+import { consumeMagicToken } from "@/server/magicTokens";
+import { checkRateLimits, clientIp, rateLimitKey, rateLimitStoreFor } from "@/server/rateLimit";
 import { createSessionToken } from "@/server/sessions";
+import { durableSqlRunner, type SqlRunner } from "@/server/sql-runner";
 import { recordUserSignIn } from "@/server/users";
 
+const invalidLink = () => NextResponse.json({ error: "Magic link is invalid or expired." }, { status: 400 });
+
 export async function POST(request: NextRequest) {
-  try {
-    const body = (await request.json().catch(() => ({}))) as { token?: unknown };
-    const token = typeof body.token === "string" ? body.token : "";
-    const email = verifyMagicToken(token);
-    await recordUserSignIn(email);
-    const sessionToken = createSessionToken(email);
-    return NextResponse.json({ email, sessionToken });
-  } catch (error) {
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Magic link is invalid or expired."
-      },
-      { status: 400 }
-    );
+  if (!isSameOriginRequest(request)) {
+    return forbidden();
   }
+
+  const nowMs = Date.now();
+  let runner: SqlRunner | null;
+  try {
+    runner = durableSqlRunner();
+    const limit = await checkRateLimits(
+      rateLimitStoreFor(runner),
+      [{ key: rateLimitKey("verify-ip", clientIp(request.headers)), ...verifyLinkLimitPerIp }],
+      nowMs
+    );
+    if (!limit.allowed) {
+      return tooManyRequests();
+    }
+  } catch {
+    return temporarilyUnavailable();
+  }
+
+  const parsed = await readJsonObject(request);
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+  const token = typeof parsed.value.token === "string" ? parsed.value.token : "";
+
+  let email: string;
+  try {
+    email = await consumeMagicToken(runner, token, nowMs);
+  } catch {
+    // Same answer for a forged, expired, reused or unknown token, and for a database failure.
+    return invalidLink();
+  }
+  await recordUserSignIn(email);
+  return NextResponse.json({ email, sessionToken: createSessionToken(email) });
 }

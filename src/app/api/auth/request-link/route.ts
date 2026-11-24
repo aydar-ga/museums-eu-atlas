@@ -1,120 +1,122 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getDb } from "@/db";
-import { emailDelivery, isProductionDeployment, serverEnv } from "@/lib/env";
-import { createMagicToken, isValidEmail } from "@/server/magicTokens";
+import { emailDelivery, isVercelDeployment, serverEnv } from "@/lib/env";
+import { forbidden, isSameOriginRequest, readJsonObject, temporarilyUnavailable, tooManyRequests } from "@/server/api-guard";
+import { hashIdentifier, reserveEmailSend } from "@/server/email-guard";
+import { createMagicToken, isValidEmail, recordIssuedMagicToken } from "@/server/magicTokens";
 import {
   checkRateLimits,
   clientIp,
+  memoryRateLimitStore,
   rateLimitKey,
-  rateLimitStoreFor,
   requestLinkLimitPerEmail,
   requestLinkLimitPerIp,
   requestLinkWindowMs
 } from "@/server/rateLimit";
+import { durableSqlRunner } from "@/server/sql-runner";
 
 const emailUnavailableMessage =
   "Email sign-in isn't available yet. Your museum progress stays saved in this browser.";
+const tooManyMessage = "Too many sign-in requests. Try again later.";
 
-async function sendWithResend(email: string, magicLink: string): Promise<boolean> {
-  const delivery = emailDelivery();
-  if (!delivery) {
-    return false;
-  }
-  const { apiKey, from } = delivery;
-
+async function sendWithResend(delivery: { apiKey: string; from: string }, email: string, magicLink: string): Promise<void> {
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: `Bearer ${delivery.apiKey}`,
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      from,
+      from: delivery.from,
       to: email,
       subject: "Your ArtMuse sign-in link",
-      text: `Sign in to ArtMuse: ${magicLink}\n\nThe link expires in 10 minutes. If you did not ask for it, ignore this email.`,
-      html: `<p>Here is your ArtMuse sign-in link:</p><p><a href="${magicLink}">Sign in to ArtMuse</a></p><p>The link expires in 10 minutes. If you did not ask for it, ignore this email.</p>`
+      text: `Sign in to ArtMuse: ${magicLink}\n\nThe link works once and expires in 15 minutes. If you did not ask for it, ignore this email.`,
+      html: `<p>Here is your ArtMuse sign-in link:</p><p><a href="${magicLink}">Sign in to ArtMuse</a></p><p>The link works once and expires in 15 minutes. If you did not ask for it, ignore this email.</p>`
     })
   });
 
   if (!response.ok) {
     throw new Error("Email provider rejected the magic link request.");
   }
-  return true;
 }
 
-/** Returns a refusal response when the email or client IP is over its limit, else null. */
-async function enforceRateLimits(request: NextRequest, email: string): Promise<NextResponse | null> {
-  let limit;
-  try {
-    limit = await checkRateLimits(
-      rateLimitStoreFor(getDb()),
-      [
-        { key: rateLimitKey("email", email), limit: requestLinkLimitPerEmail, windowMs: requestLinkWindowMs },
-        { key: rateLimitKey("ip", clientIp(request.headers)), limit: requestLinkLimitPerIp, windowMs: requestLinkWindowMs }
-      ],
-      Date.now()
-    );
-  } catch {
-    // Without a working counter we cannot bound email sends, so refuse rather than fail open.
-    return NextResponse.json({ error: "Sign-in is temporarily unavailable." }, { status: 503 });
-  }
-  if (limit.allowed) {
-    return null;
-  }
-  const minutes = Math.ceil(limit.retryAfterSeconds / 60);
-  return NextResponse.json(
-    { error: `Too many sign-in requests. Try again in ${minutes} minute${minutes === 1 ? "" : "s"}.` },
-    { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
-  );
-}
-
+/**
+ * Checks run cheapest first and every one fails closed: same-origin, body size, honeypot, email shape,
+ * kill switch, per-instance memory limits, then the durable Postgres caps (docs/security-guardrails.md).
+ */
 export async function POST(request: NextRequest) {
-  const body = (await request.json().catch(() => ({}))) as { email?: unknown };
+  if (!isSameOriginRequest(request)) {
+    return forbidden();
+  }
+  const parsed = await readJsonObject(request);
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+  const body = parsed.value;
   const email = typeof body.email === "string" ? body.email.trim().toLocaleLowerCase("en-US") : "";
+
+  // Honeypot: people never fill the hidden field, form bots do. Pretend success and send nothing.
+  if (typeof body.website === "string" && body.website.trim()) {
+    return NextResponse.json({ email, delivery: "email" });
+  }
   if (!isValidEmail(email)) {
     return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
   }
 
-  // In production the link must only ever travel by email: returning it in the response
-  // would let anyone sign in as any address. Without an email provider, refuse.
-  if (isProductionDeployment() && !emailDelivery()) {
+  // Kill switch: deployments send only when AUTH_EMAIL_ENABLED is "true" and Resend is configured.
+  // The link is never returned in the response there; only local runs get it inline.
+  const delivery = emailDelivery();
+  if (!delivery && isVercelDeployment()) {
     return NextResponse.json({ error: emailUnavailableMessage }, { status: 503 });
   }
 
-  const limited = await enforceRateLimits(request, email);
-  if (limited) {
-    return limited;
-  }
-
-  // Never build the link from the client-supplied Origin header: an attacker could
-  // request a link for someone else's address and point the emailed token at their host.
-  let origin: string;
+  const nowMs = Date.now();
+  const ip = clientIp(request.headers);
   let token: string;
+  let origin: string;
   try {
+    const firstLayer = await checkRateLimits(
+      memoryRateLimitStore(),
+      [
+        { key: rateLimitKey("email", email), limit: requestLinkLimitPerEmail, windowMs: requestLinkWindowMs },
+        { key: rateLimitKey("ip", ip), limit: requestLinkLimitPerIp, windowMs: requestLinkWindowMs }
+      ],
+      nowMs
+    );
+    if (!firstLayer.allowed) {
+      return tooManyRequests(tooManyMessage);
+    }
+
+    const runner = durableSqlRunner();
+    if (runner) {
+      const decision = await reserveEmailSend(runner, {
+        emailHash: hashIdentifier("email", email),
+        ipHash: hashIdentifier("ip", ip),
+        nowMs
+      });
+      if (decision === "blocked") {
+        return tooManyRequests(tooManyMessage);
+      }
+    }
+    // Never build the link from the client-supplied Origin header: an attacker could
+    // request a link for someone else's address and point the emailed token at their host.
     origin = serverEnv().PUBLIC_APP_URL ?? request.nextUrl.origin;
     token = createMagicToken(email);
+    await recordIssuedMagicToken(runner, token, nowMs);
   } catch {
-    return NextResponse.json({ error: "Sign-in is temporarily unavailable." }, { status: 503 });
+    return temporarilyUnavailable();
   }
   const magicLink = `${origin}/magic-link?token=${encodeURIComponent(token)}`;
 
-  let sent: boolean;
+  if (!delivery) {
+    // Local runs only (checked above): no email provider, so hand the link to the developer.
+    return NextResponse.json({ email, magicLink, delivery: "dev" });
+  }
   try {
-    sent = await sendWithResend(email, magicLink);
+    await sendWithResend(delivery, email, magicLink);
   } catch {
     return NextResponse.json({ error: "Could not send the magic link email. Try again later." }, { status: 502 });
   }
-
-  if (sent) {
-    // The link proves ownership of the inbox, so it must only travel by email.
-    return NextResponse.json({ email, delivery: "email" });
-  }
-
-  return NextResponse.json({
-    email,
-    magicLink,
-    delivery: "dev"
-  });
+  // The link proves ownership of the inbox, so it only travels by email.
+  return NextResponse.json({ email, delivery: "email" });
 }

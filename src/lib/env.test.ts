@@ -47,11 +47,19 @@ describe("accessors", () => {
     expect(databaseUrl()).toBeNull();
   });
 
-  it("configures email delivery only when both Resend variables are set", () => {
+  it("configures email delivery only when both Resend variables are set and the kill switch is on", () => {
+    vi.stubEnv("AUTH_EMAIL_ENABLED", "true");
     vi.stubEnv("RESEND_API_KEY", "re_test");
     vi.stubEnv("AUTH_EMAIL_FROM", "");
     expect(emailDelivery()).toBeNull();
     vi.stubEnv("AUTH_EMAIL_FROM", "ArtMuse <noreply@example.com>");
     expect(emailDelivery()).toEqual({ apiKey: "re_test", from: "ArtMuse <noreply@example.com>" });
+  });
+
+  it.each(["", "false", "TRUE", "1", "yes", " true"])("keeps email off when AUTH_EMAIL_ENABLED=%j", (value) => {
+    vi.stubEnv("AUTH_EMAIL_ENABLED", value);
+    vi.stubEnv("RESEND_API_KEY", "re_test");
+    vi.stubEnv("AUTH_EMAIL_FROM", "ArtMuse <noreply@example.com>");
+    expect(emailDelivery()).toBeNull();
   });
 });

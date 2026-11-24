@@ -1,10 +1,12 @@
-import { createHash } from "node:crypto";
 import { sql, type SQL } from "drizzle-orm";
 
-/** Fixed-window limits for POST /api/auth/request-link. */
-export const requestLinkWindowMs = 15 * 60 * 1000;
-export const requestLinkLimitPerEmail = 5;
-export const requestLinkLimitPerIp = 20;
+import { hashIdentifier } from "./email-guard";
+import { requestLinkMemoryLimits } from "./abuse-limits";
+
+/** Fixed-window limits for the in-memory first layer of POST /api/auth/request-link. */
+export const requestLinkWindowMs = requestLinkMemoryLimits.perEmail.windowMs;
+export const requestLinkLimitPerEmail = requestLinkMemoryLimits.perEmail.limit;
+export const requestLinkLimitPerIp = requestLinkMemoryLimits.perIp.limit;
 
 /** Rows older than this are deleted; it only needs to exceed the longest window. */
 const pruneAfterMs = 24 * 60 * 60 * 1000;
@@ -85,9 +87,9 @@ export function createDbRateLimitStore(db: SqlExecutor): RateLimitStore {
   };
 }
 
-/** Keys hold a SHA-256 of the email or IP, never the raw value. */
-export function rateLimitKey(kind: "email" | "ip", value: string): string {
-  return `${kind}:${createHash("sha256").update(value).digest("hex")}`;
+/** Keys hold an HMAC of the email, IP or user, never the raw value. */
+export function rateLimitKey(kind: "email" | "ip" | "verify-ip" | "write-user", value: string): string {
+  return `${kind}:${hashIdentifier(kind === "write-user" ? "user" : kind === "verify-ip" ? "ip" : kind, value)}`;
 }
 
 /** Vercel sets x-real-ip and x-forwarded-for itself; elsewhere these headers can be spoofed. */
@@ -100,6 +102,11 @@ export function clientIp(headers: Headers): string {
 }
 
 let memoryStore = createMemoryRateLimitStore();
+
+/** The per-process store, used as a cheap first layer even when a database is configured. */
+export function memoryRateLimitStore(): RateLimitStore {
+  return memoryStore;
+}
 
 /** Test hook: forget every in-memory window. */
 export function resetMemoryRateLimitStore(): void {

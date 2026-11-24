@@ -6,8 +6,7 @@ import {
   maxRouteNameLength,
   maxSlugListItems,
   parseMuseumSlugList,
-  parseRouteName,
-  readJsonBody
+  parseRouteName
 } from "./payloads";
 
 describe("parseMuseumSlugList", () => {
@@ -55,18 +54,5 @@ describe("isUuid", () => {
     expect(isUuid("not-a-uuid")).toBe(false);
     expect(isUuid("3f2b8c1e9a4d4e6f8b7a1c2d3e4f5a6b")).toBe(false);
     expect(isUuid("3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b'; drop table users;--")).toBe(false);
-  });
-});
-
-describe("readJsonBody", () => {
-  it("parses a JSON object body", async () => {
-    const request = new Request("https://artmuse.app/api", { method: "POST", body: JSON.stringify({ a: 1 }) });
-    await expect(readJsonBody(request)).resolves.toEqual({ a: 1 });
-  });
-
-  it("returns null for malformed JSON and for non-object JSON", async () => {
-    await expect(readJsonBody(new Request("https://artmuse.app/api", { method: "POST", body: "{nope" }))).resolves.toBeNull();
-    await expect(readJsonBody(new Request("https://artmuse.app/api", { method: "POST", body: "[1,2]" }))).resolves.toBeNull();
-    await expect(readJsonBody(new Request("https://artmuse.app/api", { method: "POST", body: "null" }))).resolves.toBeNull();
   });
 });

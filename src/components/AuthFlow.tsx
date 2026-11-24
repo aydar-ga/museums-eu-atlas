@@ -16,7 +16,8 @@ export function AuthFlow() {
     setError("");
     setIsSubmitting(true);
     try {
-      const response = await requestMagicLink(email);
+      const website = new FormData(event.currentTarget).get("website");
+      const response = await requestMagicLink(email, typeof website === "string" ? website : "");
       setSentEmail(response.email);
       setMagicLink(response.magicLink ?? "");
     } catch (requestError) {
@@ -84,6 +85,11 @@ export function AuthFlow() {
                 onChange={(event) => setEmail(event.target.value)}
               />
             </div>
+          </div>
+          {/* Honeypot: hidden from people and assistive tech; bots that fill every field get a fake success. */}
+          <div className="visually-hidden" aria-hidden="true">
+            <label htmlFor="website">Website</label>
+            <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" defaultValue="" />
           </div>
           <button className="primary-action" type="submit" data-testid="auth-submit" disabled={isSubmitting}>
             {isSubmitting ? "Sending..." : "Send magic link"}

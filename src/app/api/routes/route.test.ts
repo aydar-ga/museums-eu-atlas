@@ -13,6 +13,7 @@ const { createSavedRoute } = vi.hoisted(() => ({
 }));
 
 vi.mock("@/db", () => ({ getDb: () => ({}) }));
+vi.mock("@/server/sql-runner", () => ({ durableSqlRunner: () => null }));
 vi.mock("@/server/routes", () => ({
   listSavedRoutes: vi.fn(async () => []),
   createSavedRoute

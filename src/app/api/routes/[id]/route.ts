@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getAuthenticatedEmail } from "@/server/auth-request";
+import { requireWriteSession } from "@/server/api-guard";
 import { isUuid } from "@/server/payloads";
 import { deleteSavedRoute } from "@/server/routes";
 import { getDb } from "@/db";
@@ -10,10 +10,11 @@ type RouteParams = {
 };
 
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
-  const email = getAuthenticatedEmail(request);
-  if (!email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireWriteSession(request);
+  if (!session.ok) {
+    return session.response;
   }
+  const email = session.value;
   if (!getDb()) {
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
   }

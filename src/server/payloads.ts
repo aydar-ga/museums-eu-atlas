@@ -45,13 +45,3 @@ export function isUuid(value: string): boolean {
 }
 
 /** Parses a JSON object body; returns null for malformed JSON or a non-object payload. */
-export async function readJsonBody(request: Request): Promise<Record<string, unknown> | null> {
-  try {
-    const body: unknown = await request.json();
-    return body !== null && typeof body === "object" && !Array.isArray(body)
-      ? (body as Record<string, unknown>)
-      : null;
-  } catch {
-    return null;
-  }
-}

@@ -1,4 +1,4 @@
-import { boolean, index, integer, pgTable, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { bigserial, boolean, index, integer, pgTable, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -43,4 +43,38 @@ export const authRateLimits = pgTable(
     count: integer("count").notNull()
   },
   (table) => [index("auth_rate_limits_window_start_idx").on(table.windowStart)]
+);
+
+/**
+ * Append-only auth log (migration 0003). Rows hold HMAC hashes of email and IP, never raw values.
+ * `link_requested` rows are the sliding-window counters behind the email caps in src/server/email-guard.ts.
+ * Kinds: link_requested | link_blocked | sign_in | sign_up. Rows older than 35 days are pruned.
+ */
+export const authEvents = pgTable(
+  "auth_events",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    kind: text("kind").notNull(),
+    emailHash: text("email_hash"),
+    ipHash: text("ip_hash"),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [
+    index("auth_events_kind_created_at_idx").on(table.kind, table.createdAt),
+    index("auth_events_email_hash_created_at_idx").on(table.emailHash, table.createdAt),
+    index("auth_events_ip_hash_created_at_idx").on(table.ipHash, table.createdAt)
+  ]
+);
+
+/** Issued magic links, stored as SHA-256 of the token. A link is consumed once (used_at). */
+export const magicLinkTokens = pgTable(
+  "magic_link_tokens",
+  {
+    tokenHash: text("token_hash").primaryKey(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [index("magic_link_tokens_expires_at_idx").on(table.expiresAt)]
 );
