@@ -55,8 +55,8 @@
 | ✅ | Museum pages with highlights, official links and online collections |
 | ✅ | Light and dark themes, phone to desktop |
 | ✅ | A new name and home: ArtMuse at [artmuse.app](https://artmuse.app) |
-| 🚧 | Email sign-in, so your list follows you across devices |
-| 🚧 | Saved trip routes for signed-in travellers |
+| ✅ | Email sign-in, so your list follows you across devices |
+| ✅ | Saved trip routes for signed-in travellers |
 | 🔮 | A scratch-off Europe map of your museum journey, ready to print or share |
 | 🔮 | Collections and badges: Impressionist Hunter, Renaissance Master, Northern Masters |
 | 🔮 | An AI museum guide that adapts to you: tourist, student or art nerd |

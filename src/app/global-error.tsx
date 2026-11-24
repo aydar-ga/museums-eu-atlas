@@ -14,8 +14,7 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
           <button type="button" className="primary-action" onClick={reset}>
             Try again
           </button>
-          {/* A plain link: the router may be what failed. */}
-          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- a plain link: the router may be what failed */}
           <a className="primary-link" href="/">Back to museums</a>
         </main>
       </body>
