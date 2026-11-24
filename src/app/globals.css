@@ -577,7 +577,9 @@ select.filter-input {
 
 /* Scratch-off reveal: marking a museum visited wipes a gold foil off its image, like a scratch poster. */
 .scratch-foil {
-    animation: scratch-off 0.9s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+    /* At rest the foil is already wiped away; only the running animation shows it (`both` applies its first frame). */
+    animation: scratch-off 0.9s cubic-bezier(0.65, 0, 0.35, 1) both;
+    clip-path: inset(0 0 0 100%);
     background:
         repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.16) 0 2px, transparent 2px 9px),
         linear-gradient(135deg, #7d5c17 0%, #c79a3b 24%, #f4e2a1 46%, #d9b45a 62%, #8a6a1f 100%);
