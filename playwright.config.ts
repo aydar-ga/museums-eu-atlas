@@ -46,12 +46,13 @@ export default defineConfig({
   webServer: isExternalTarget
     ? undefined
     : {
-        command: "npm run dev",
+        // A production build, as shipped. NEXT_PUBLIC_E2E_TEST_MODE keeps the ?testUser= shortcut in it.
+        command: "npm run build:app && npm run start",
         url: baseURL,
         reuseExistingServer: !process.env.CI,
         // The app has no fallback signing key; this throwaway one exists only for the server Playwright starts.
-        env: { AUTH_SECRET: "playwright-e2e-only-not-a-secret" },
-        timeout: 60_000,
+        env: { AUTH_SECRET: "playwright-e2e-only-not-a-secret", NEXT_PUBLIC_E2E_TEST_MODE: "1" },
+        timeout: 600_000,
         stdout: "pipe",
         stderr: "pipe"
       }

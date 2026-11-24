@@ -1,4 +1,4 @@
-import { isProductionBuild } from "./env";
+import { devAffordancesEnabled } from "./env";
 import { readPlanned, readSessionToken, readVisited, writePlanned, writeSessionToken, writeVisited } from "./storage";
 
 export type ProgressSnapshot = {
@@ -92,7 +92,7 @@ export async function hydrateProgressFromServer(): Promise<ProgressSnapshot | nu
 }
 
 export async function ensureDevSession(email: string): Promise<void> {
-  if (isProductionBuild) {
+  if (!devAffordancesEnabled) {
     return;
   }
 

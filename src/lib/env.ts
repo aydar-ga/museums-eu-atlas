@@ -18,6 +18,13 @@ import { getDatabaseUrlFromEnv } from "./vercel-build";
 /** True for `next build` output, including Vercel Preview and Production. Dev-only helpers check it. */
 export const isProductionBuild = process.env.NODE_ENV === "production";
 
+/**
+ * Dev/test affordances (the `?testUser=` shortcut and `/api/auth/dev-session`) are on under `next dev` and
+ * in a production build made for e2e with `NEXT_PUBLIC_E2E_TEST_MODE=1`. The dev-session route also
+ * refuses on every Vercel deployment, so a stray flag there opens nothing.
+ */
+export const devAffordancesEnabled = !isProductionBuild || process.env.NEXT_PUBLIC_E2E_TEST_MODE === "1";
+
 /** True while building or running on Vercel. Server components only: it is not inlined into client code. */
 export const isVercelBuild = process.env.VERCEL === "1";
 

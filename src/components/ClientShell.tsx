@@ -4,7 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 
-import { isProductionBuild } from "@/lib/env";
+import { devAffordancesEnabled } from "@/lib/env";
 import { ensureDevSession, hydrateProgressFromServer } from "@/lib/progress-sync";
 import { clearUser, readUserEmail, writeUserEmail, authChangedEvent, progressChangedEvent } from "@/lib/storage";
 import type { User } from "@/types";
@@ -28,7 +28,7 @@ function panelModeFromPath(pathname: string): PanelMode | null {
 }
 
 function readDevTestUserEmail(): string | null {
-  if (isProductionBuild || typeof window === "undefined") {
+  if (!devAffordancesEnabled || typeof window === "undefined") {
     return null;
   }
   const email = new URL(window.location.href).searchParams.get("testUser")?.trim().toLocaleLowerCase("en-US") ?? "";

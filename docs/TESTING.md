@@ -32,6 +32,8 @@ Run e2e:
 npm run test:e2e
 ```
 
+Playwright starts a production build (`next build && next start`), the same output that ships, not `next dev`. It sets a throwaway `AUTH_SECRET` and `NEXT_PUBLIC_E2E_TEST_MODE=1` for that server only.
+
 Run against an already running app:
 
 ```bash
@@ -46,7 +48,7 @@ Visual regression snapshots live in `tests/e2e/visual.spec.ts-snapshots/`. Updat
 npm run test:e2e -- --project=visual --update-snapshots
 ```
 
-The account e2e opens `/account?testUser=e2e@example.com` and skips the magic-link roundtrip. That shortcut is ignored in production builds. Magic-link form behavior remains covered by component tests, and token verification is covered below the browser layer.
+The account e2e opens `/account?testUser=e2e@example.com` and skips the magic-link roundtrip. The shortcut works under `next dev` and in builds made with `NEXT_PUBLIC_E2E_TEST_MODE=1`; `/api/auth/dev-session` additionally answers 404 on every Vercel deployment, whatever flags are set there. Magic-link form behavior remains covered by component tests, and token verification is covered below the browser layer.
 
 ## Full Local Check
 
