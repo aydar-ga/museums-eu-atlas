@@ -1,9 +1,8 @@
 // @vitest-environment node
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { createMagicToken, verifyMagicToken } from "./magicTokens";
 import { isProductionDeployment, requireAuthSecret } from "@/lib/env";
-import { createSessionToken, verifySessionToken } from "./sessions";
+import { createMagicToken, verifyMagicToken } from "./magicTokens";
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -22,30 +21,18 @@ describe("requireAuthSecret", () => {
     vi.stubEnv("AUTH_SECRET", "  ");
     expect(isProductionDeployment()).toBe(vercelEnv === "production");
     expect(() => requireAuthSecret()).toThrow(/AUTH_SECRET/);
-    expect(() => createSessionToken("visitor@example.com")).toThrow(/AUTH_SECRET/);
     expect(() => createMagicToken("visitor@example.com")).toThrow(/AUTH_SECRET/);
   });
 });
 
-describe("token types", () => {
-  it("rejects a magic-link token used as a session token, and the reverse", () => {
-    const magicToken = createMagicToken("visitor@example.com");
-    const sessionToken = createSessionToken("visitor@example.com");
-
-    expect(verifyMagicToken(magicToken)).toBe("visitor@example.com");
-    expect(verifySessionToken(sessionToken)).toBe("visitor@example.com");
-    expect(() => verifySessionToken(magicToken)).toThrow();
-    expect(() => verifyMagicToken(sessionToken)).toThrow();
-  });
-
-  it("keeps accepting session tokens issued before token types existed", () => {
-    const payload = Buffer.from(
-      JSON.stringify({ email: "visitor@example.com", exp: Date.now() + 60_000 })
-    ).toString("base64url");
-    // Sign the legacy payload exactly as the old code did.
-    const legacy = `${payload}.${createLegacySignature(payload)}`;
-    expect(verifySessionToken(legacy)).toBe("visitor@example.com");
-    expect(() => verifyMagicToken(legacy)).toThrow();
+describe("magic-link tokens", () => {
+  it("rejects tampered and foreign tokens with the same message", () => {
+    const token = createMagicToken("visitor@example.com");
+    const [payload] = token.split(".");
+    const forged = `${Buffer.from(JSON.stringify({ typ: "magic", email: "x@example.com", exp: Date.now() + 60_000 })).toString("base64url")}.${token.split(".")[1]}`;
+    expect(verifyMagicToken(token)).toBe("visitor@example.com");
+    expect(() => verifyMagicToken(forged)).toThrow("Magic link is invalid or expired.");
+    expect(() => verifyMagicToken(`${payload}.`)).toThrow("Magic link is invalid or expired.");
   });
 
   it("expires magic-link tokens after 15 minutes", () => {
@@ -64,9 +51,3 @@ describe("token types", () => {
     expect(createMagicToken("visitor@example.com")).not.toBe(createMagicToken("visitor@example.com"));
   });
 });
-
-import { createHmac } from "node:crypto";
-
-function createLegacySignature(payload: string): string {
-  return createHmac("sha256", requireAuthSecret()).update(payload).digest("base64url");
-}

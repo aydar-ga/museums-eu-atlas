@@ -48,7 +48,7 @@ Supported variables:
 
 - `APP_PORT` - local Playwright/dev port, default `5001`.
 - `DATABASE_URL`, Vercel-provisioned `POSTGRES_URL`, or `POSTGRES_PRISMA_URL` (in that order) - Neon Postgres connection string for Drizzle account persistence.
-- `AUTH_SECRET` - signs magic-link and session tokens. Required wherever sign-in is used, local runs included: there is no fallback, so sign-in answers 503 without it. Generate one with `openssl rand -base64 32`.
+- `AUTH_SECRET` - signs magic-link tokens and keys the hashes in `auth_events`. Required wherever sign-in is used, local runs included: there is no fallback, so sign-in answers 503 without it. Generate one with `openssl rand -base64 32`.
 - `PUBLIC_APP_URL` - optional absolute URL for generated magic links.
 - `AUTH_EMAIL_ENABLED` - kill switch; deployments send sign-in email only when it is exactly `true`.
 - `RESEND_API_KEY` - optional email delivery.
@@ -58,7 +58,7 @@ Supported variables:
 - `GIT_COMMIT` - optional commit id that `/api/healthz` reports outside Vercel.
 - `APP_BASE_URL` - optional Playwright target for an already running app.
 
-Without `DATABASE_URL`, magic-link auth still works locally and the browser session stays in `localStorage`.
+Without `DATABASE_URL`, magic-link auth still works locally; sessions, single-use tokens and rate-limit counters then live in process memory.
 
 Without Resend settings, the magic-link endpoint returns a dev link in the UI.
 

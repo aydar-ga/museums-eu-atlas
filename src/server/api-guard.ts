@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { serverEnv } from "@/lib/env";
 import { maxJsonBodyBytes, writeLimitPerUser } from "./abuse-limits";
-import { getAuthenticatedEmail } from "./auth-request";
 import { checkRateLimits, rateLimitKey, rateLimitStoreFor } from "./rateLimit";
+import { readSessionEmail, sessionIdFrom } from "./sessions";
 import { durableSqlRunner } from "./sql-runner";
 
 /** The only place that builds a 401. */
@@ -21,15 +21,29 @@ export function tooManyRequests(message = "Too many requests. Try again later.")
 
 type Guarded<T> = { ok: true; value: T } | { ok: false; response: NextResponse };
 
-/** Reads the session user from `Authorization: Bearer`, or answers 401. */
-export function requireSession(request: NextRequest): Guarded<string> {
-  const email = getAuthenticatedEmail(request);
-  return email ? { ok: true, value: email } : { ok: false, response: unauthorized() };
+/** The signed-in email from the session cookie; 401 without a valid session, 503 if the store fails. */
+export async function requireSession(request: NextRequest): Promise<Guarded<string>> {
+  const id = sessionIdFrom(request);
+  if (!id) {
+    return { ok: false, response: unauthorized() };
+  }
+  try {
+    const email = await readSessionEmail(durableSqlRunner(), id, Date.now());
+    return email ? { ok: true, value: email } : { ok: false, response: unauthorized() };
+  } catch {
+    return { ok: false, response: temporarilyUnavailable() };
+  }
 }
 
-/** A session plus the per-user durable write cap. A failed counter refuses the write (503). */
+/**
+ * For cookie-authenticated writes: same-origin (403, CSRF), a session (401), then the per-user durable
+ * write cap (429). A failed counter refuses the write (503).
+ */
 export async function requireWriteSession(request: NextRequest): Promise<Guarded<string>> {
-  const session = requireSession(request);
+  if (!isSameOriginRequest(request)) {
+    return { ok: false, response: forbidden() };
+  }
+  const session = await requireSession(request);
   if (!session.ok) {
     return session;
   }

@@ -26,8 +26,8 @@ Pages:
 Route handlers:
 
 - `POST /api/auth/request-link` creates a signed magic-link token. With `RESEND_API_KEY` and `AUTH_EMAIL_FROM` it emails the link and returns only `{ email, delivery: "email" }`. Without a provider it returns the link inline (`delivery: "dev"`) everywhere except the Vercel production deployment (`VERCEL_ENV=production`), where it answers 503 "Email sign-in isn't available yet" so the link can never reach anyone but the inbox owner. The link origin is `PUBLIC_APP_URL`, else the request URL; the client `Origin` header is never used. Requests are limited to 5 per email and 20 per client IP per 15 minutes (429 with `Retry-After`); counters live in `auth_rate_limits` when a database is configured, else in process memory. If the counter cannot be updated the route answers 503 rather than sending unbounded email.
-- `POST /api/auth/verify-link` verifies a signed token, upserts the account in Neon when configured, and returns a signed session token.
-- `POST /api/auth/dev-session` (non-production only) creates a signed session token for local/e2e shortcuts.
+- `POST /api/auth/verify-link` verifies and consumes a signed one-time token, upserts the account in Neon when configured, and sets the session cookie.
+- `POST /api/auth/dev-session` (local dev and e2e builds only; 404 on Vercel) sets a session cookie for the `?testUser=` shortcut.
 - `GET /api/progress` and `PUT /api/progress` read/write signed-in planned and visited museum slugs in Neon.
 - `GET /api/routes`, `POST /api/routes`, and `DELETE /api/routes/[id]` manage saved trip routes for signed-in users.
 - `GET /api/healthz` returns service metadata and database connectivity for monitoring.
@@ -59,11 +59,11 @@ The utility rail (sign-in + theme controls) renders through `UtilityRailHost`, a
 
 ## Auth
 
-Auth is passwordless and intentionally minimal. The route handler signs a time-limited magic-link token with `AUTH_SECRET`. Successful verification also returns a longer-lived signed session token stored in `localStorage` as `museumsEuAtlasSession`.
+Auth is passwordless and intentionally minimal. The route handler signs a time-limited magic-link token with `AUTH_SECRET`. Successful verification starts a server-side session: a random id in an `__Host-artmuse_session` cookie (`Secure`, `HttpOnly`, `SameSite=Lax`, `Path=/`, 30 days), stored only as a SHA-256 in the `sessions` table (migration 0004). Script cannot read it, so nothing secret lives in `localStorage`; the UI keeps only the email there. Each sign-in rotates the session (the browser's previous one is deleted), and `POST /api/auth/logout` deletes it server-side and clears the cookie.
 
-Tokens are HMAC-SHA256 signed with `AUTH_SECRET` (`requireAuthSecret()` in `src/lib/env.ts`). Magic-link tokens (`typ: "magic"`, 10 minutes) and session tokens (`typ: "session"`, 30 days) are not interchangeable; session tokens issued before the `typ` claim existed are still accepted. A missing `AUTH_SECRET` fails closed in every environment: token creation and verification throw, and the auth routes answer 503 or 401. There is no development fallback. Magic links expire after 15 minutes and work once: only a SHA-256 of each token is stored (`magic_link_tokens`) and verification consumes it atomically. Abuse and cost caps on sign-in email, verification and writes are in [security-guardrails.md](security-guardrails.md).
+Magic-link tokens are HMAC-SHA256 signed with `AUTH_SECRET` (`requireAuthSecret()` in `src/lib/env.ts`) and compared in constant time. A missing `AUTH_SECRET` fails closed in every environment: token creation and verification throw, and the auth routes answer 503 or 400. There is no development fallback. Magic links expire after 15 minutes and work once: only a SHA-256 of each token is stored (`magic_link_tokens`) and verification consumes it atomically. Abuse and cost caps on sign-in email, verification and writes are in [security-guardrails.md](security-guardrails.md).
 
-Authenticated API routes read `Authorization: Bearer <sessionToken>`.
+Authenticated API routes read the session cookie (`requireSession` in `src/server/api-guard.ts`); cookie-authenticated writes also require a same-origin request. Without a database (local dev, e2e) sessions live in process memory.
 
 When `DATABASE_URL` or Vercel-provisioned `POSTGRES_URL` points at Neon Postgres, successful magic-link verification upserts a row in the `users` table through Drizzle. Progress and saved routes require both a valid session token and a configured database.
 

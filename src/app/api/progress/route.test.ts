@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { NextRequest } from "next/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { writeUserProgress } = vi.hoisted(() => ({ writeUserProgress: vi.fn(async () => undefined) }));
 
@@ -14,16 +14,22 @@ vi.mock("@/server/progress", () => ({
 }));
 
 import { resetMemoryRateLimitStore } from "@/server/rateLimit";
-import { createSessionToken } from "@/server/sessions";
+import { sessionCookieFor } from "@/test/session";
 import { failingRunner } from "@/test/pglite";
 import { PUT } from "./route";
 
-function put(body: string, token: string | null = createSessionToken("visitor@example.com")) {
+let visitorCookie = "";
+beforeAll(async () => {
+  visitorCookie = await sessionCookieFor("visitor@example.com");
+});
+
+function put(body: string, token: string | null = visitorCookie) {
   return new NextRequest("https://artmuse.app/api/progress", {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {})
+      "sec-fetch-site": "same-origin",
+      ...(token ? { cookie: token } : {})
     },
     body
   });
@@ -42,7 +48,7 @@ describe("PUT /api/progress", () => {
       expect((await PUT(put(body))).status).toBe(200);
     }
     expect((await PUT(put(body))).status).toBe(429);
-    const other = createSessionToken("someone-else@example.com");
+    const other = await sessionCookieFor("someone-else@example.com");
     expect((await PUT(put(body, other))).status).toBe(200);
   });
 

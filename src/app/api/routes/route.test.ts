@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { NextRequest } from "next/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { createSavedRoute } = vi.hoisted(() => ({
   createSavedRoute: vi.fn(async (_email: string, name: string, museumSlugs: string[]) => ({
@@ -19,15 +19,21 @@ vi.mock("@/server/routes", () => ({
   createSavedRoute
 }));
 
-import { createSessionToken } from "@/server/sessions";
+import { sessionCookieFor } from "@/test/session";
 import { POST } from "./route";
 
-function post(body: string, token: string | null = createSessionToken("visitor@example.com")) {
+let visitorCookie = "";
+beforeAll(async () => {
+  visitorCookie = await sessionCookieFor("visitor@example.com");
+});
+
+function post(body: string, token: string | null = visitorCookie) {
   return new NextRequest("https://artmuse.app/api/routes", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {})
+      "sec-fetch-site": "same-origin",
+      ...(token ? { cookie: token } : {})
     },
     body
   });

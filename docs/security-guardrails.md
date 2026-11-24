@@ -31,11 +31,11 @@ The link is never returned in the response on a Vercel deployment. Local runs wi
 
 ## Logout
 
-`POST /api/auth/logout` only (other methods get 405), same-origin only (else 403). Sessions are stateless bearer tokens in `localStorage` today, so the client deletes its copy; server-side session deletion comes with cookie sessions.
+`POST /api/auth/logout` only (other methods get 405), same-origin only (else 403). It deletes the server-side session and clears the `__Host-` cookie. Sign-in rotates the session.
 
 ## Authenticated writes
 
-`PUT /api/progress`, `POST /api/routes` and `DELETE /api/routes/:id` need a session (401), allow 300 writes per user per day (durable, 429), and refuse JSON bodies over 16 KB (413). Helpers: `requireSession`, `requireWriteSession` and `readJsonObject` in `src/server/api-guard.ts`, the only module that builds a 401.
+`PUT /api/progress`, `POST /api/routes` and `DELETE /api/routes/:id` need a same-origin request (403, CSRF) and a session cookie (401), allow 300 writes per user per day (durable, 429), and refuse JSON bodies over 16 KB (413). Helpers: `requireSession`, `requireWriteSession` and `readJsonObject` in `src/server/api-guard.ts`, the only module that builds a 401.
 
 ## Without a database
 

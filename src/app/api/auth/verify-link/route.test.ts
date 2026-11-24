@@ -10,7 +10,7 @@ vi.mock("@/server/sql-runner", () => ({ durableSqlRunner: () => durable.runner }
 
 import { createMagicToken, recordIssuedMagicToken } from "@/server/magicTokens";
 import { resetMemoryRateLimitStore } from "@/server/rateLimit";
-import { verifySessionToken } from "@/server/sessions";
+import { readSessionEmail, sessionCookieName } from "@/server/sessions";
 import { POST } from "./route";
 
 function verify(token: string, headers: Record<string, string> = {}) {
@@ -45,9 +45,10 @@ describe("POST /api/auth/verify-link", () => {
   it("signs in once per link: a second use is refused", async () => {
     const token = await issue();
     const first = await POST(verify(token));
-    const body = (await first.json()) as { email: string; sessionToken: string };
     expect(first.status).toBe(200);
-    expect(verifySessionToken(body.sessionToken)).toBe("visitor@example.com");
+    expect(await first.json()).toEqual({ email: "visitor@example.com" });
+    const sessionId = first.cookies.get(sessionCookieName)?.value ?? "";
+    expect(await readSessionEmail(database.runner, sessionId, Date.now())).toBe("visitor@example.com");
 
     const second = await POST(verify(token));
     expect(second.status).toBe(400);
@@ -84,6 +85,17 @@ describe("POST /api/auth/verify-link", () => {
     expect((await POST(verify(await issue()))).status).toBe(200);
     vi.unstubAllEnvs();
     vi.unstubAllGlobals();
+  });
+
+  it("rotates the session: the browser's previous session ends at sign-in", async () => {
+    const first = await POST(verify(await issue()));
+    const oldId = first.cookies.get(sessionCookieName)?.value ?? "";
+    const second = await POST(verify(await issue(), { cookie: `${sessionCookieName}=${oldId}` }));
+    const newId = second.cookies.get(sessionCookieName)?.value ?? "";
+
+    expect(newId).not.toBe(oldId);
+    expect(await readSessionEmail(database.runner, oldId, Date.now())).toBeNull();
+    expect(await readSessionEmail(database.runner, newId, Date.now())).toBe("visitor@example.com");
   });
 
   it("refuses a correctly signed token that was never issued", async () => {

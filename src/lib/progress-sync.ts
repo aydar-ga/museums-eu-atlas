@@ -1,18 +1,10 @@
 import { devAffordancesEnabled } from "./env";
-import { readPlanned, readSessionToken, readVisited, writePlanned, writeSessionToken, writeVisited } from "./storage";
+import { authChangedEvent, clearUser, isSignedIn, readPlanned, readVisited, writePlanned, writeVisited } from "./storage";
 
 export type ProgressSnapshot = {
   planned: string[];
   visited: string[];
 };
-
-function authHeaders(): HeadersInit {
-  const token = readSessionToken();
-  if (!token) {
-    return {};
-  }
-  return { Authorization: `Bearer ${token}` };
-}
 
 export function mergeProgress(
   local: ProgressSnapshot,
@@ -25,13 +17,18 @@ export function mergeProgress(
 }
 
 export async function fetchServerProgress(): Promise<ProgressSnapshot | null> {
-  const token = readSessionToken();
-  if (!token) {
+  if (!isSignedIn()) {
     return null;
   }
 
   try {
-    const response = await fetch("/api/progress", { headers: authHeaders() });
+    const response = await fetch("/api/progress");
+    if (response.status === 401) {
+      // No valid session cookie (expired, signed out elsewhere, or a pre-cookie sign-in): show signed out.
+      clearUser();
+      window.dispatchEvent(new Event(authChangedEvent));
+      return null;
+    }
     if (!response.ok) {
       return null;
     }
@@ -45,8 +42,7 @@ export async function syncProgressToServer(
   planned: Set<string>,
   visited: Set<string>
 ): Promise<"synced" | "offline" | "unauthorized"> {
-  const token = readSessionToken();
-  if (!token) {
+  if (!isSignedIn()) {
     return "unauthorized";
   }
 
@@ -54,7 +50,6 @@ export async function syncProgressToServer(
     const response = await fetch("/api/progress", {
       method: "PUT",
       headers: {
-        ...authHeaders(),
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
@@ -97,18 +92,12 @@ export async function ensureDevSession(email: string): Promise<void> {
   }
 
   try {
-    const response = await fetch("/api/auth/dev-session", {
+    // The response sets the HttpOnly session cookie; there is nothing to store here.
+    await fetch("/api/auth/dev-session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email })
     });
-    if (!response.ok) {
-      return;
-    }
-    const body = (await response.json()) as { sessionToken?: string };
-    if (body.sessionToken) {
-      writeSessionToken(body.sessionToken);
-    }
   } catch {
     // Dev-only helper; ignore network failures in local runs without API routes.
   }

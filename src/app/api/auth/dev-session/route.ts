@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { devAffordancesEnabled, serverEnv } from "@/lib/env";
 import { isValidEmail } from "@/server/magicTokens";
-import { createSessionToken } from "@/server/sessions";
+import { createSession, setSessionCookie } from "@/server/sessions";
 import { durableSqlRunner } from "@/server/sql-runner";
 import { recordUserSignIn } from "@/server/users";
 
@@ -19,7 +19,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
   }
 
-  await recordUserSignIn(durableSqlRunner(), email);
-  const sessionToken = createSessionToken(email);
-  return NextResponse.json({ email, sessionToken });
+  const runner = durableSqlRunner();
+  const user = await recordUserSignIn(runner, email);
+  const response = NextResponse.json({ email });
+  setSessionCookie(response, await createSession(runner, { email, userId: user?.userId }, Date.now()));
+  return response;
 }

@@ -55,7 +55,7 @@ Production needs at minimum:
 - Neon `POSTGRES_URL` / `DATABASE_URL` from Vercel Marketplace
 - `PUBLIC_APP_URL` for magic-link redirects
 - Email delivery: `RESEND_API_KEY`, `AUTH_EMAIL_FROM`. Without them, production answers `POST /api/auth/request-link` with 503 and nobody can sign in; local progress still works.
-- Rotating `AUTH_SECRET` signs every user out (all session tokens become invalid).
+- Rotating `AUTH_SECRET` invalidates outstanding magic links. Sessions are server-side rows; to sign everyone out, delete from `sessions`.
 
 Preview deployments have their own `AUTH_SECRET` (since 2026-11-23). Without one, sign-in on that deployment answers 503; the build still succeeds because `src/lib/env.ts` validates at request time.
 

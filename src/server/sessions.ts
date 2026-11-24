@@ -1,64 +1,82 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
+import { sql } from "drizzle-orm";
+import type { NextRequest, NextResponse } from "next/server";
 
-import { requireAuthSecret } from "@/lib/env";
+import type { SqlRunner } from "./sql-runner";
 
-const sessionLifetimeMs = 30 * 24 * 60 * 60 * 1000;
+/** `__Host-` makes the browser insist on Secure, Path=/ and no Domain, so subdomains cannot set or read it. */
+export const sessionCookieName = "__Host-artmuse_session";
+export const sessionLifetimeMs = 30 * 24 * 60 * 60 * 1000;
 
-function base64url(input: string): string {
-  return Buffer.from(input).toString("base64url");
+/** Only this hash is stored; the random id itself lives in the HttpOnly cookie. */
+function hashSessionId(id: string): string {
+  return createHash("sha256").update(id).digest("hex");
 }
 
-function sign(payload: string): string {
-  return createHmac("sha256", requireAuthSecret()).update(payload).digest("base64url");
+/** Per-process fallback for local runs without a database (dev, e2e). */
+const memorySessions = new Map<string, { email: string; expiresAtMs: number }>();
+
+/** Creates a server-side session and returns the id for the cookie. With a database it needs the account id. */
+export async function createSession(
+  runner: SqlRunner | null,
+  account: { email: string; userId?: string },
+  nowMs: number
+): Promise<string> {
+  const id = randomBytes(32).toString("base64url");
+  const idHash = hashSessionId(id);
+  const expiresAtMs = nowMs + sessionLifetimeMs;
+  if (!runner) {
+    memorySessions.set(idHash, { email: account.email, expiresAtMs });
+    return id;
+  }
+  if (!account.userId) {
+    throw new Error("A database session needs an account id.");
+  }
+  await runner.transaction([
+    sql`delete from sessions where expires_at < ${new Date(nowMs).toISOString()}::timestamptz`,
+    sql`insert into sessions (id_hash, user_id, created_at, expires_at)
+      values (${idHash}, ${account.userId}::uuid, ${new Date(nowMs).toISOString()}::timestamptz,
+        ${new Date(expiresAtMs).toISOString()}::timestamptz)`
+  ]);
+  return id;
 }
 
-function verifySignedPayload(token: string): { email: string; exp: number } {
-  const [payload, signature] = token.split(".");
-  if (!payload || !signature) {
-    throw new Error("Session is invalid or expired.");
+/** The signed-in email for a session id, or null when it is unknown or expired. Database errors propagate. */
+export async function readSessionEmail(runner: SqlRunner | null, id: string, nowMs: number): Promise<string | null> {
+  const idHash = hashSessionId(id);
+  if (!runner) {
+    const session = memorySessions.get(idHash);
+    return session && session.expiresAtMs > nowMs ? session.email : null;
   }
-
-  const expected = sign(payload);
-  const actualBuffer = Buffer.from(signature);
-  const expectedBuffer = Buffer.from(expected);
-  if (
-    actualBuffer.length !== expectedBuffer.length ||
-    !timingSafeEqual(actualBuffer, expectedBuffer)
-  ) {
-    throw new Error("Session is invalid or expired.");
-  }
-
-  const decoded = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as {
-    typ?: unknown;
-    email?: unknown;
-    exp?: unknown;
-  };
-  // Session tokens issued before token types existed carry no typ; a magic-link token never passes.
-  if (
-    typeof decoded.email !== "string" ||
-    typeof decoded.exp !== "number" ||
-    (decoded.typ !== undefined && decoded.typ !== "session")
-  ) {
-    throw new Error("Session is invalid or expired.");
-  }
-  if (decoded.exp < Date.now()) {
-    throw new Error("Session has expired.");
-  }
-
-  return { email: decoded.email, exp: decoded.exp };
+  const { rows } = await runner.execute(sql`select u.email from sessions s join users u on u.id = s.user_id
+    where s.id_hash = ${idHash} and s.expires_at > ${new Date(nowMs).toISOString()}::timestamptz`);
+  const email = rows[0]?.email;
+  return typeof email === "string" ? email : null;
 }
 
-export function createSessionToken(email: string): string {
-  const payload = base64url(
-    JSON.stringify({
-      typ: "session",
-      email: email.trim().toLocaleLowerCase("en-US"),
-      exp: Date.now() + sessionLifetimeMs
-    })
-  );
-  return `${payload}.${sign(payload)}`;
+export async function deleteSession(runner: SqlRunner | null, id: string): Promise<void> {
+  const idHash = hashSessionId(id);
+  if (!runner) {
+    memorySessions.delete(idHash);
+    return;
+  }
+  await runner.execute(sql`delete from sessions where id_hash = ${idHash}`);
 }
 
-export function verifySessionToken(token: string): string {
-  return verifySignedPayload(token).email;
+export function sessionIdFrom(request: NextRequest): string | null {
+  return request.cookies.get(sessionCookieName)?.value || null;
+}
+
+export function setSessionCookie(response: NextResponse, id: string): void {
+  response.cookies.set(sessionCookieName, id, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "lax",
+    path: "/",
+    maxAge: sessionLifetimeMs / 1000
+  });
+}
+
+export function clearSessionCookie(response: NextResponse): void {
+  response.cookies.set(sessionCookieName, "", { httpOnly: true, secure: true, sameSite: "lax", path: "/", maxAge: 0 });
 }

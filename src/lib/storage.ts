@@ -3,7 +3,8 @@ const plannedStorageKey = "plannedMuseums";
 const migrationKey = `${visitedStorageKey}:slugMigrationComplete`;
 const milestonesKey = `${visitedStorageKey}:announcedMilestones`;
 const userKey = "museumsEuAtlasUser";
-const sessionKey = "museumsEuAtlasSession";
+/** Bearer tokens used to live here; sessions are HttpOnly cookies now. Removed on sign-in and sign-out. */
+const legacySessionKey = "museumsEuAtlasSession";
 
 export const authChangedEvent = "museumsEuAtlasAuthChanged";
 export const progressChangedEvent = "museumsEuAtlasProgressChanged";
@@ -98,20 +99,12 @@ export function writeUserEmail(email: string): void {
     return;
   }
   localStorage.setItem(userKey, JSON.stringify({ email }));
+  localStorage.removeItem(legacySessionKey);
 }
 
-export function readSessionToken(): string | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-  return localStorage.getItem(sessionKey);
-}
-
-export function writeSessionToken(token: string): void {
-  if (typeof window === "undefined") {
-    return;
-  }
-  localStorage.setItem(sessionKey, token);
+/** Whether this browser believes it is signed in. The session itself is an HttpOnly cookie script cannot read. */
+export function isSignedIn(): boolean {
+  return Boolean(readUserEmail());
 }
 
 export function clearUser(): void {
@@ -119,5 +112,5 @@ export function clearUser(): void {
     return;
   }
   localStorage.removeItem(userKey);
-  localStorage.removeItem(sessionKey);
+  localStorage.removeItem(legacySessionKey);
 }

@@ -6,7 +6,7 @@ import { readUserProgress, writeUserProgress } from "@/server/progress";
 import { getDb } from "@/db";
 
 export async function GET(request: NextRequest) {
-  const session = requireSession(request);
+  const session = await requireSession(request);
   if (!session.ok) {
     return session.response;
   }

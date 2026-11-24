@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { NextRequest } from "next/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { deleteSavedRoute } = vi.hoisted(() => ({ deleteSavedRoute: vi.fn(async () => true) }));
 
@@ -8,13 +8,18 @@ vi.mock("@/db", () => ({ getDb: () => ({}) }));
 vi.mock("@/server/sql-runner", () => ({ durableSqlRunner: () => null }));
 vi.mock("@/server/routes", () => ({ deleteSavedRoute }));
 
-import { createSessionToken } from "@/server/sessions";
+import { sessionCookieFor } from "@/test/session";
 import { DELETE } from "./route";
 
-function del(id: string, token: string | null = createSessionToken("visitor@example.com")) {
+let visitorCookie = "";
+beforeAll(async () => {
+  visitorCookie = await sessionCookieFor("visitor@example.com");
+});
+
+function del(id: string, token: string | null = visitorCookie) {
   const request = new NextRequest(`https://artmuse.app/api/routes/${encodeURIComponent(id)}`, {
     method: "DELETE",
-    headers: token ? { Authorization: `Bearer ${token}` } : {}
+    headers: { "sec-fetch-site": "same-origin", ...(token ? { cookie: token } : {}) }
   });
   return DELETE(request, { params: Promise.resolve({ id }) });
 }

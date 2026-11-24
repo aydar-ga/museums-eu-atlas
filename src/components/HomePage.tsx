@@ -14,7 +14,7 @@ import {
   progressChangedEvent,
   readAnnouncedMilestones,
   readPlanned,
-  readSessionToken,
+  isSignedIn,
   readVisited,
   writeAnnouncedMilestones,
   writePlanned,
@@ -101,7 +101,7 @@ export function HomePage() {
   function persistProgress(nextPlanned: Set<string>, nextVisited: Set<string>) {
     writePlanned(nextPlanned);
     writeVisited(nextVisited);
-    if (readSessionToken()) {
+    if (isSignedIn()) {
       void syncProgressToServer(nextPlanned, nextVisited);
     }
   }

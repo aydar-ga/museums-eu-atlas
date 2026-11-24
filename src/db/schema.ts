@@ -78,3 +78,17 @@ export const magicLinkTokens = pgTable(
   },
   (table) => [index("magic_link_tokens_expires_at_idx").on(table.expiresAt)]
 );
+
+/** Server-side sessions (migration 0004). The cookie holds a random id; only its SHA-256 is stored. */
+export const sessions = pgTable(
+  "sessions",
+  {
+    idHash: text("id_hash").primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull()
+  },
+  (table) => [index("sessions_user_id_idx").on(table.userId), index("sessions_expires_at_idx").on(table.expiresAt)]
+);

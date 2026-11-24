@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { syncProgressToServer } from "@/lib/progress-sync";
 import { createSavedRoute, deleteSavedRoute, fetchSavedRoutes } from "@/lib/routes-api";
-import { readPlanned, readSessionToken, readUserEmail, readVisited } from "@/lib/storage";
+import { readPlanned, isSignedIn, readUserEmail, readVisited } from "@/lib/storage";
 import type { SavedRoute } from "@/types";
 
 type AccountPanelProps = {
@@ -35,7 +35,7 @@ export function AccountPanel({ email, onSignInOpen, onLogout }: AccountPanelProp
   }, []);
 
   useEffect(() => {
-    if (!activeEmail || !readSessionToken()) {
+    if (!activeEmail || !isSignedIn()) {
       setRoutes([]);
       setSyncStatus("idle");
       return;

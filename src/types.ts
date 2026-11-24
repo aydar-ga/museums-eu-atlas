@@ -36,7 +36,6 @@ export type MagicLinkResponse = {
 
 export type VerifyLinkResponse = {
   email: string;
-  sessionToken?: string;
 };
 
 export type SavedRoute = {

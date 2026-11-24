@@ -1,22 +1,13 @@
 import type { SavedRoute } from "@/types";
-import { readSessionToken } from "./storage";
-
-function authHeaders(): HeadersInit {
-  const token = readSessionToken();
-  if (!token) {
-    return {};
-  }
-  return { Authorization: `Bearer ${token}` };
-}
+import { isSignedIn } from "./storage";
 
 export async function fetchSavedRoutes(): Promise<SavedRoute[]> {
-  const token = readSessionToken();
-  if (!token) {
+  if (!isSignedIn()) {
     return [];
   }
 
   try {
-    const response = await fetch("/api/routes", { headers: authHeaders() });
+    const response = await fetch("/api/routes");
     if (!response.ok) {
       return [];
     }
@@ -28,8 +19,7 @@ export async function fetchSavedRoutes(): Promise<SavedRoute[]> {
 }
 
 export async function createSavedRoute(name: string, museumSlugs: string[]): Promise<SavedRoute | null> {
-  const token = readSessionToken();
-  if (!token) {
+  if (!isSignedIn()) {
     return null;
   }
 
@@ -37,7 +27,6 @@ export async function createSavedRoute(name: string, museumSlugs: string[]): Pro
     const response = await fetch("/api/routes", {
       method: "POST",
       headers: {
-        ...authHeaders(),
         "Content-Type": "application/json"
       },
       body: JSON.stringify({ name, museumSlugs })
@@ -53,15 +42,13 @@ export async function createSavedRoute(name: string, museumSlugs: string[]): Pro
 }
 
 export async function deleteSavedRoute(routeId: string): Promise<boolean> {
-  const token = readSessionToken();
-  if (!token) {
+  if (!isSignedIn()) {
     return false;
   }
 
   try {
     const response = await fetch(`/api/routes/${encodeURIComponent(routeId)}`, {
-      method: "DELETE",
-      headers: authHeaders()
+      method: "DELETE"
     });
     return response.ok;
   } catch {

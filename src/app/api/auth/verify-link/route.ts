@@ -5,7 +5,7 @@ import { notifyOwnerOfSignUp, recordSignInEvents } from "@/server/auth-events";
 import { forbidden, isSameOriginRequest, readJsonObject, temporarilyUnavailable, tooManyRequests } from "@/server/api-guard";
 import { consumeMagicToken } from "@/server/magicTokens";
 import { checkRateLimits, clientIp, rateLimitKey, rateLimitStoreFor } from "@/server/rateLimit";
-import { createSessionToken } from "@/server/sessions";
+import { createSession, deleteSession, sessionIdFrom, setSessionCookie } from "@/server/sessions";
 import { durableSqlRunner, type SqlRunner } from "@/server/sql-runner";
 import { recordUserSignIn } from "@/server/users";
 
@@ -46,8 +46,15 @@ export async function POST(request: NextRequest) {
     return invalidLink();
   }
   let user;
+  let sessionId: string;
   try {
     user = await recordUserSignIn(runner, email, nowMs);
+    // Rotate: a sign-in always starts a fresh session and ends the one this browser had.
+    const previous = sessionIdFrom(request);
+    if (previous) {
+      await deleteSession(runner, previous);
+    }
+    sessionId = await createSession(runner, { email, userId: user?.userId }, nowMs);
   } catch {
     return temporarilyUnavailable();
   }
@@ -58,5 +65,7 @@ export async function POST(request: NextRequest) {
       await notifyOwnerOfSignUp(runner, email, nowMs).catch(() => false);
     }
   }
-  return NextResponse.json({ email, sessionToken: createSessionToken(email) });
+  const response = NextResponse.json({ email });
+  setSessionCookie(response, sessionId);
+  return response;
 }

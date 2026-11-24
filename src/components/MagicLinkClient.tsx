@@ -5,8 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
 
 import { verifyMagicLink } from "@/lib/auth";
-import { ensureDevSession } from "@/lib/progress-sync";
-import { writeUserEmail, writeSessionToken, authChangedEvent, progressChangedEvent } from "@/lib/storage";
+import { writeUserEmail, authChangedEvent, progressChangedEvent } from "@/lib/storage";
 
 /**
  * Links work once, so the page waits for a click before spending the token. Email security scanners
@@ -26,13 +25,9 @@ export function MagicLinkClient() {
     startedRef.current = true;
     setIsSigningIn(true);
     try {
-      const { email, sessionToken } = await verifyMagicLink(token);
+      // The response sets the HttpOnly session cookie; only the email is kept for the UI.
+      const { email } = await verifyMagicLink(token);
       writeUserEmail(email);
-      if (sessionToken) {
-        writeSessionToken(sessionToken);
-      } else {
-        await ensureDevSession(email);
-      }
       window.dispatchEvent(new Event(authChangedEvent));
       window.dispatchEvent(new Event(progressChangedEvent));
       window.location.replace("/account");
