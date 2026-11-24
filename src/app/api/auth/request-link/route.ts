@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { emailDelivery, isVercelDeployment, serverEnv } from "@/lib/env";
-import { forbidden, isSameOriginRequest, readJsonObject, temporarilyUnavailable, tooManyRequests } from "@/server/api-guard";
+import { forbidden, isSameOriginRequest, readJsonBody, temporarilyUnavailable, tooManyRequests } from "@/server/api-guard";
 import { sendEmail } from "@/server/email";
 import { hashIdentifier, reserveEmailSend } from "@/server/email-guard";
 import { createMagicToken, isValidEmail, recordIssuedMagicToken } from "@/server/magicTokens";
+import { requestLinkPayload } from "@/server/payloads";
 import {
   checkRateLimits,
   clientIp,
@@ -37,12 +38,12 @@ export async function POST(request: NextRequest) {
   if (!isSameOriginRequest(request)) {
     return forbidden();
   }
-  const parsed = await readJsonObject(request);
+  const parsed = await readJsonBody(request, requestLinkPayload, "Enter a valid email address.");
   if (!parsed.ok) {
     return parsed.response;
   }
   const body = parsed.value;
-  const email = typeof body.email === "string" ? body.email.trim().toLocaleLowerCase("en-US") : "";
+  const email = body.email.trim().toLocaleLowerCase("en-US");
 
   // Honeypot: people never fill the hidden field, form bots do. Pretend success and send nothing.
   if (typeof body.website === "string" && body.website.trim()) {

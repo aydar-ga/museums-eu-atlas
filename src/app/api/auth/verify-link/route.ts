@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { verifyLinkLimitPerIp } from "@/server/abuse-limits";
 import { notifyOwnerOfSignUp, recordSignInEvents } from "@/server/auth-events";
-import { forbidden, isSameOriginRequest, readJsonObject, temporarilyUnavailable, tooManyRequests } from "@/server/api-guard";
+import { forbidden, isSameOriginRequest, readJsonBody, temporarilyUnavailable, tooManyRequests } from "@/server/api-guard";
 import { consumeMagicToken } from "@/server/magicTokens";
+import { verifyLinkPayload } from "@/server/payloads";
 import { checkRateLimits, clientIp, rateLimitKey, rateLimitStoreFor } from "@/server/rateLimit";
 import { createSession, deleteSession, sessionIdFrom, setSessionCookie } from "@/server/sessions";
 import { durableSqlRunner, type SqlRunner } from "@/server/sql-runner";
@@ -32,11 +33,11 @@ export async function POST(request: NextRequest) {
     return temporarilyUnavailable();
   }
 
-  const parsed = await readJsonObject(request);
+  const parsed = await readJsonBody(request, verifyLinkPayload, "Magic link is invalid or expired.");
   if (!parsed.ok) {
     return parsed.response;
   }
-  const token = typeof parsed.value.token === "string" ? parsed.value.token : "";
+  const { token } = parsed.value;
 
   let email: string;
   try {

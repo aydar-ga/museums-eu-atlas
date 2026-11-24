@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { z } from "zod";
 
 import { serverEnv } from "@/lib/env";
 import { maxJsonBodyBytes, writeLimitPerUser } from "./abuse-limits";
@@ -83,6 +84,22 @@ export function isSameOriginRequest(request: NextRequest): boolean {
 
 export function forbidden(): NextResponse {
   return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+}
+
+/** Reads a JSON body and validates it with a Zod schema; any mismatch answers 400 with `invalidMessage`. */
+export async function readJsonBody<T>(
+  request: Request,
+  schema: z.ZodType<T>,
+  invalidMessage: string
+): Promise<Guarded<T>> {
+  const parsed = await readJsonObject(request);
+  if (!parsed.ok) {
+    return parsed;
+  }
+  const result = schema.safeParse(parsed.value);
+  return result.success
+    ? { ok: true, value: result.data }
+    : { ok: false, response: NextResponse.json({ error: invalidMessage }, { status: 400 }) };
 }
 
 /** Parses a JSON object body of at most `maxBytes`; answers 413 when larger and 400 when not an object. */

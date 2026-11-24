@@ -1,10 +1,32 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
 
-import { readJsonObject } from "./api-guard";
+import { readJsonBody, readJsonObject } from "./api-guard";
+import { progressPayload, requestLinkPayload, routePayload, verifyLinkPayload } from "./payloads";
 
 const post = (body: string, headers: Record<string, string> = {}) =>
   new Request("https://artmuse.app/api", { method: "POST", body, headers });
+
+describe("readJsonBody", () => {
+  it.each([
+    ["request-link", requestLinkPayload, { email: 42 }],
+    ["verify-link", verifyLinkPayload, { token: ["x"] }],
+    ["progress", progressPayload, { planned: "louvre-museum", visited: [] }],
+    ["routes", routePayload, { name: "", museumSlugs: ["louvre-museum"] }]
+  ] as const)("rejects a malformed %s body with 400 and the route's message", async (_name, schema, body) => {
+    const result = await readJsonBody<unknown>(post(JSON.stringify(body)), schema, "nope");
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.response.status).toBe(400);
+      expect(await result.response.json()).toEqual({ error: "nope" });
+    }
+  });
+
+  it("returns the parsed value and drops unknown keys", async () => {
+    const result = await readJsonBody(post(JSON.stringify({ token: "abc", extra: 1 })), verifyLinkPayload, "nope");
+    expect(result).toEqual({ ok: true, value: { token: "abc" } });
+  });
+});
 
 describe("readJsonObject", () => {
   it("parses a JSON object body", async () => {

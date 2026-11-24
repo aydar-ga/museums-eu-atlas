@@ -37,6 +37,10 @@ The link is never returned in the response on a Vercel deployment. Local runs wi
 
 `PUT /api/progress`, `POST /api/routes` and `DELETE /api/routes/:id` need a same-origin request (403, CSRF) and a session cookie (401), allow 300 writes per user per day (durable, 429), and refuse JSON bodies over 16 KB (413). Helpers: `requireSession`, `requireWriteSession` and `readJsonObject` in `src/server/api-guard.ts`, the only module that builds a 401.
 
+## Input validation
+
+Every API body and parameter is parsed with a Zod schema in `src/server/payloads.ts` through `readJsonBody` (`src/server/api-guard.ts`): at most 16 KB, a JSON object, unknown keys dropped, any mismatch answered 400 with a fixed message. Error responses never carry exception text or stack traces.
+
 ## Without a database
 
 On a Vercel deployment a missing database refuses every guarded request. Local runs without a database (dev, e2e) fall back to per-process memory counters and a per-process used-token set.

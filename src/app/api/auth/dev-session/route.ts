@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { devAffordancesEnabled, serverEnv } from "@/lib/env";
+import { readJsonBody } from "@/server/api-guard";
 import { isValidEmail } from "@/server/magicTokens";
+import { devSessionPayload } from "@/server/payloads";
 import { createSession, setSessionCookie } from "@/server/sessions";
 import { durableSqlRunner } from "@/server/sql-runner";
 import { recordUserSignIn } from "@/server/users";
@@ -13,8 +15,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const body = (await request.json().catch(() => ({}))) as { email?: unknown };
-  const email = typeof body.email === "string" ? body.email.trim().toLocaleLowerCase("en-US") : "";
+  const parsed = await readJsonBody(request, devSessionPayload, "Enter a valid email address.");
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+  const email = parsed.value.email.trim().toLocaleLowerCase("en-US");
   if (!isValidEmail(email)) {
     return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
   }

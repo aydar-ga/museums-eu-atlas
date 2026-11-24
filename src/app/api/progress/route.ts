@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { readJsonObject, requireSession, requireWriteSession } from "@/server/api-guard";
-import { parseMuseumSlugList } from "@/server/payloads";
+import { readJsonBody, requireSession, requireWriteSession } from "@/server/api-guard";
+import { progressPayload } from "@/server/payloads";
 import { readUserProgress, writeUserProgress } from "@/server/progress";
 import { getDb } from "@/db";
 
@@ -29,15 +29,11 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
   }
 
-  const parsed = await readJsonObject(request);
+  const parsed = await readJsonBody(request, progressPayload, "Invalid progress payload");
   if (!parsed.ok) {
     return parsed.response;
   }
-  const planned = parseMuseumSlugList(parsed.value.planned);
-  const visited = parseMuseumSlugList(parsed.value.visited);
-  if (!planned || !visited) {
-    return NextResponse.json({ error: "Invalid progress payload" }, { status: 400 });
-  }
+  const { planned, visited } = parsed.value;
 
   await writeUserProgress(email, { planned, visited });
   return NextResponse.json({ planned, visited });
