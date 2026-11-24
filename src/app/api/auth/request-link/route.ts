@@ -32,7 +32,7 @@ function sendSignInLink(delivery: { apiKey: string; from: string }, email: strin
 
 /**
  * Checks run cheapest first and every one fails closed: same-origin, body size, honeypot, email shape,
- * kill switch, per-instance memory limits, then the durable Postgres caps (docs/security-guardrails.md).
+ * kill switch, per-instance memory limits, then the durable Postgres caps.
  */
 export async function POST(request: NextRequest) {
   if (!isSameOriginRequest(request)) {

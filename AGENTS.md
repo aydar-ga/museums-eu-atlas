@@ -1,6 +1,6 @@
 # Codex Agent Guide
 
-Read `docs/AGENT_INDEX.md` first. This repository is `museums-eu-atlas`, an English Europe/global art museum atlas built with Next.js App Router, React, TypeScript, local images, magic-link auth route handlers, and browser localStorage planned/visited progress.
+This repository is public. Its internal docs (agent index, architecture, decisions, roadmap, operations, owner actions) live in the owner's private notes at `../ag-dev-meta/projects/museums-eu-atlas/docs/`. Read `AGENT_INDEX.md` there first when it is available. This repository is `museums-eu-atlas`, an English Europe/global art museum atlas built with Next.js App Router, React, TypeScript, local images, magic-link auth route handlers, and browser localStorage planned/visited progress.
 
 ## Hard Guardrails
 
@@ -15,9 +15,9 @@ Read `docs/AGENT_INDEX.md` first. This repository is `museums-eu-atlas`, an Engl
 ## Required After Every Iteration
 
 1. Tests are updated for changed behavior.
-2. Docs are updated for changed architecture, workflow, or product behavior.
-3. README, agent index, and other entrypoint/index files are updated when commands or navigation change.
-4. Roadmap is updated when scope is deferred, completed, or newly discovered.
+2. The private docs (`../ag-dev-meta/projects/museums-eu-atlas/docs/`) are updated for changed architecture, workflow, product behavior or roadmap scope.
+3. The visitor README is updated when visitors would notice the change.
+4. Never commit internal notes here: owner actions, incident or rotation logs, security rationale and thresholds, monitoring setup, account plans, audits, roadmaps or changelogs. They go in the private docs.
 
 ## Verification Default
 

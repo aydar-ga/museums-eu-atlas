@@ -1,4 +1,4 @@
-/** Every abuse and cost cap in one place. See docs/security-guardrails.md. */
+/** Every abuse and cost cap in one place. */
 
 const minute = 60 * 1000;
 const hour = 60 * minute;
