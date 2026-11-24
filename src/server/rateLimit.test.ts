@@ -2,6 +2,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  ipBucket,
   checkRateLimits,
   clientIp,
   createDbRateLimitStore,
@@ -91,3 +92,15 @@ describe("clientIp", () => {
     expect(clientIp(new Headers())).toBe("unknown");
   });
 });
+
+describe("ipBucket", () => {
+  it("keeps IPv4 addresses and reduces IPv6 addresses to their /64", () => {
+    expect(ipBucket("203.0.113.7")).toBe("203.0.113.7");
+    expect(ipBucket("2001:db8:abcd:12:1:2:3:4")).toBe("2001:db8:abcd:12::/64");
+    expect(ipBucket("2001:DB8:abcd:0012::99")).toBe("2001:db8:abcd:12::/64");
+    expect(ipBucket("2001:db8::1")).toBe("2001:db8:0:0::/64");
+    expect(ipBucket("::1")).toBe("0:0:0:0::/64");
+    expect(ipBucket("::ffff:198.51.100.4")).toBe("198.51.100.4");
+  });
+});
+

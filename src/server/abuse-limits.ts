@@ -47,3 +47,38 @@ export const maxJsonBodyBytes = 16 * 1024;
 
 /** Emails longer than RFC 5321 allows are refused. */
 export const maxEmailLength = 254;
+
+/**
+ * Visitor feedback (POST /api/feedback), durable, counted over stored messages. A message over a cap is refused
+ * with 429. Owner alert emails are capped separately; the daily digest still counts every stored message.
+ */
+export const feedbackLimits = {
+  perIpPerHour: { limit: 5, windowMs: hour },
+  perIpPerDay: { limit: 20, windowMs: day },
+  appPerDay: { limit: 100, windowMs: day }
+} as const;
+
+/** Cheap per-instance first layer in front of the durable feedback caps. */
+export const feedbackMemoryLimitPerIp = { limit: 5, windowMs: 15 * minute } as const;
+
+/** Owner emails about feedback, durable. Beyond this, messages are stored and counted in the digest only. */
+export const feedbackAlertLimit = { limit: 10, windowMs: day } as const;
+
+export const maxFeedbackMessageLength = 2000;
+
+/** Feedback rows are deleted after this, by the daily digest cron. */
+export const feedbackRetentionMs = 365 * day;
+
+/**
+ * Anonymous product events (POST /api/events): one beacon per page visit, at most `maxEventsPerBeacon` events.
+ * The per-instance limit stops one client from flooding; the app-wide daily cap bounds database writes.
+ */
+export const productEventLimits = {
+  maxEventsPerBeacon: 30,
+  beaconsPerIp: { limit: 20, windowMs: 10 * minute },
+  appEventsPerDay: 20_000
+} as const;
+
+/** Daily event counters are deleted after this, by the daily digest cron. */
+export const productEventRetentionMs = 400 * day;
+

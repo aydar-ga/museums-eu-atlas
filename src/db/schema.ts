@@ -1,4 +1,4 @@
-import { bigserial, boolean, index, integer, pgTable, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { bigserial, boolean, date, index, integer, pgTable, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -92,3 +92,39 @@ export const sessions = pgTable(
   },
   (table) => [index("sessions_user_id_idx").on(table.userId), index("sessions_expires_at_idx").on(table.expiresAt)]
 );
+
+/**
+ * Visitor feedback from /feedback. `reply_email` is optional and used only to answer the visitor; the IP is
+ * stored as an HMAC (see email-guard.ts). Rows are deleted after feedbackRetentionMs.
+ */
+export const feedbackMessages = pgTable(
+  "feedback_messages",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    kind: text("kind").notNull(),
+    message: text("message").notNull(),
+    replyEmail: text("reply_email"),
+    ipHash: text("ip_hash").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [
+    index("feedback_messages_created_at_idx").on(table.createdAt),
+    index("feedback_messages_ip_hash_created_at_idx").on(table.ipHash, table.createdAt)
+  ]
+);
+
+/**
+ * Anonymous product events, aggregated per UTC day: no user, IP, cookie or timestamp finer than the day.
+ * `subject` is a museum slug, a filter name or a feedback kind, or '' when the event has none.
+ */
+export const productEventCounts = pgTable(
+  "product_event_counts",
+  {
+    day: date("day").notNull(),
+    name: text("name").notNull(),
+    subject: text("subject").notNull().default(""),
+    count: integer("count").notNull().default(0)
+  },
+  (table) => [primaryKey({ columns: [table.day, table.name, table.subject] })]
+);
+

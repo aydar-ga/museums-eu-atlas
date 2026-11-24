@@ -88,8 +88,31 @@ export function createDbRateLimitStore(db: SqlExecutor): RateLimitStore {
 }
 
 /** Keys hold an HMAC of the email, IP or user, never the raw value. */
-export function rateLimitKey(kind: "email" | "ip" | "verify-ip" | "write-user", value: string): string {
-  return `${kind}:${hashIdentifier(kind === "write-user" ? "user" : kind === "verify-ip" ? "ip" : kind, value)}`;
+export function rateLimitKey(
+  kind: "email" | "ip" | "verify-ip" | "write-user" | "feedback-ip" | "events-ip",
+  value: string
+): string {
+  const hashKind = kind === "write-user" ? "user" : kind === "email" ? "email" : "ip";
+  return `${kind}:${hashIdentifier(hashKind, value)}`;
+}
+
+/**
+ * The unit an IP-based limit counts: the address itself for IPv4, its /64 prefix for IPv6, because one
+ * IPv6 subscriber usually controls a whole /64.
+ */
+export function ipBucket(ip: string): string {
+  const mappedIpv4 = /^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/i.exec(ip);
+  if (mappedIpv4) {
+    return mappedIpv4[1]!;
+  }
+  if (!ip.includes(":")) {
+    return ip;
+  }
+  const [head = "", tail] = ip.toLowerCase().split("::");
+  const left = head ? head.split(":") : [];
+  const right = tail ? tail.split(":") : [];
+  const groups = tail === undefined ? left : [...left, ...Array(Math.max(0, 8 - left.length - right.length)).fill("0"), ...right];
+  return `${groups.slice(0, 4).map((group) => group.replace(/^0+(?=.)/, "")).join(":")}::/64`;
 }
 
 /** Vercel sets x-real-ip and x-forwarded-for itself; elsewhere these headers can be spoofed. */

@@ -1,6 +1,9 @@
 import { z } from "zod";
 
 import { museums } from "@/data/museums";
+import { feedbackKinds, minFeedbackMessageLength } from "@/lib/feedback";
+import { filterNames } from "@/lib/product-events";
+import { maxEmailLength, maxFeedbackMessageLength, productEventLimits } from "./abuse-limits";
 
 /** Raw list items accepted per request: 4x the dataset, leaving room for stale local slugs. */
 export const maxSlugListItems = 200;
@@ -52,3 +55,34 @@ export function parseRouteName(value: unknown): string | null {
 export function isUuid(value: string): boolean {
   return routeIdParam.safeParse(value).success;
 }
+
+/** POST /api/feedback. `website` is the honeypot. An empty email means "no reply wanted". */
+export const feedbackPayload = z
+  .object({
+    kind: z.enum(feedbackKinds),
+    message: z.string().trim().max(maxFeedbackMessageLength).default(""),
+    email: z
+      .union([z.literal(""), z.email().max(maxEmailLength)])
+      .optional()
+      .transform((value) => (value ? value.toLocaleLowerCase("en-US") : undefined)),
+    website: z.string().max(200).optional()
+  })
+  .refine((body) => body.kind === "interest" || body.message.length >= minFeedbackMessageLength);
+
+const museumSlug = z.string().refine((slug) => knownSlugs.has(slug));
+const noSubject = z.literal("").optional().transform(() => "" as const);
+
+/** POST /api/events: one beacon of anonymous product events. One unknown event refuses the whole beacon. */
+export const productEventsPayload = z.object({
+  events: z
+    .array(
+      z.discriminatedUnion("name", [
+        z.object({ name: z.enum(["museum_planned", "museum_visited", "official_site_opened"]), subject: museumSlug }),
+        z.object({ name: z.literal("filter_used"), subject: z.enum(filterNames) }),
+        z.object({ name: z.literal("feedback_sent"), subject: z.enum(feedbackKinds) }),
+        z.object({ name: z.enum(["signin_started", "route_saved"]), subject: noSubject })
+      ])
+    )
+    .max(productEventLimits.maxEventsPerBeacon)
+});
+

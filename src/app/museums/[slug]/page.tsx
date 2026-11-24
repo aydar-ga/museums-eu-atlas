@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 /* eslint-disable @next/next/no-img-element -- Native images preserve source/license display and fallback behavior. */
 
 import { ArrowLeftIcon } from "@/components/Icons";
+import { OfficialSiteLink } from "@/components/OfficialSiteLink";
 import { fallbackImage, museumImageUrl } from "@/lib/image";
 import { getMuseum, museums, relatedMuseums } from "@/data/museums";
 import { baseOpenGraph } from "@/lib/site";
@@ -98,7 +99,7 @@ export default async function MuseumDetailPage({
             </ul>
           </section>
           <div className="detail-actions">
-            <a className="primary-link" href={museum.officialUrl} rel="noopener noreferrer" target="_blank">Official site</a>
+            <OfficialSiteLink slug={museum.slug} href={museum.officialUrl} />
             {museum.onlineUrl ? <a className="secondary-link" href={museum.onlineUrl} rel="noopener noreferrer" target="_blank">Online collection</a> : null}
           </div>
           <section className="detail-section sources">

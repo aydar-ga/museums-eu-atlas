@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 
 import { requestMagicLink } from "../lib/auth";
+import { trackEvent } from "../lib/product-events";
 
 export function AuthFlow() {
   const [email, setEmail] = useState("");
@@ -20,6 +21,7 @@ export function AuthFlow() {
       const response = await requestMagicLink(email, typeof website === "string" ? website : "");
       setSentEmail(response.email);
       setMagicLink(response.magicLink ?? "");
+      trackEvent({ name: "signin_started", subject: "" });
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Could not create a magic link.");
     } finally {

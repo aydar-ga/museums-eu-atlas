@@ -60,7 +60,16 @@ function serverSchema() {
     AUTH_EMAIL_ENABLED: z
       .string()
       .optional()
-      .transform((value) => value === "true")
+      .transform((value) => value === "true"),
+    // Kill switches for visitor feedback and anonymous product events: on unless set to exactly "false".
+    FEEDBACK_ENABLED: z
+      .string()
+      .optional()
+      .transform((value) => value !== "false"),
+    PRODUCT_EVENTS_ENABLED: z
+      .string()
+      .optional()
+      .transform((value) => value !== "false")
   });
 }
 

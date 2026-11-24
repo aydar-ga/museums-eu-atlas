@@ -28,7 +28,10 @@ export async function createTestDatabase() {
   return {
     runner,
     query: async (text: string) => (await client.query<Record<string, unknown>>(text)).rows,
-    reset: () => client.exec("truncate auth_events, magic_link_tokens, auth_rate_limits, sessions, users cascade"),
+    reset: () =>
+      client.exec(
+        "truncate auth_events, magic_link_tokens, auth_rate_limits, sessions, feedback_messages, product_event_counts, users cascade"
+      ),
     close: () => client.close()
   };
 }

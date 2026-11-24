@@ -20,6 +20,7 @@ import {
   writePlanned,
   writeVisited
 } from "../lib/storage";
+import { trackEvent, type FilterName } from "../lib/product-events";
 import { syncProgressToServer } from "../lib/progress-sync";
 
 const milestoneCopy: Record<number, string> = {
@@ -29,6 +30,8 @@ const milestoneCopy: Record<number, string> = {
   25: "Halfway through the top 50.",
   50: "All 50 museums marked. Collection complete."
 };
+
+const trackFilter = (subject: FilterName) => trackEvent({ name: "filter_used", subject });
 
 export function HomePage() {
   const slugsByLegacyId = useMemo(
@@ -115,6 +118,9 @@ export function HomePage() {
     }
     setPlannedMuseums(next);
     persistProgress(next, visitedMuseums);
+    if (next.has(slug)) {
+      trackEvent({ name: "museum_planned", subject: slug });
+    }
   }
 
   function toggleVisited(slug: string) {
@@ -127,6 +133,9 @@ export function HomePage() {
     }
     setVisitedMuseums(next);
     persistProgress(plannedMuseums, next);
+    if (isVisited) {
+      trackEvent({ name: "museum_visited", subject: slug });
+    }
 
     const nextVisitedCount = museums.filter((museum) => next.has(museum.slug)).length;
     const milestone = milestoneCopy[nextVisitedCount];
@@ -151,23 +160,23 @@ export function HomePage() {
         <div className="toolbar-row toolbar-row-search">
           <div className="search-field">
             <label className="visually-hidden" htmlFor="search-bar">Search museums</label>
-            <input id="search-bar" className="filter-input" type="search" placeholder="Search museums" autoComplete="off" value={search} onChange={(event) => setSearch(event.target.value)} data-testid="search-input" />
+            <input id="search-bar" className="filter-input" type="search" placeholder="Search museums" autoComplete="off" value={search} onChange={(event) => { setSearch(event.target.value); trackFilter("search"); }} data-testid="search-input" />
           </div>
         </div>
 
         <div className="toolbar-row toolbar-row-filters">
           <label className="visually-hidden" htmlFor="country-filter">Country</label>
-          <select id="country-filter" className="filter-input" value={country} onChange={(event) => setCountry(event.target.value)} data-testid="country-filter">
+          <select id="country-filter" className="filter-input" value={country} onChange={(event) => { setCountry(event.target.value); trackFilter("country"); }} data-testid="country-filter">
             <option value="">All countries</option>
             {uniqueCountries().map((item) => <option key={item} value={item}>{item}</option>)}
           </select>
           <label className="visually-hidden" htmlFor="category-filter">Category</label>
-          <select id="category-filter" className="filter-input" value={category} onChange={(event) => setCategory(event.target.value)} data-testid="category-filter">
+          <select id="category-filter" className="filter-input" value={category} onChange={(event) => { setCategory(event.target.value); trackFilter("category"); }} data-testid="category-filter">
             <option value="">All categories</option>
             {categories.map((item) => <option key={item} value={item}>{item}</option>)}
           </select>
           <label className="visually-hidden" htmlFor="city-filter">City</label>
-          <select id="city-filter" className="filter-input filter-input-city" value={city} onChange={(event) => setCity(event.target.value)} data-testid="city-filter">
+          <select id="city-filter" className="filter-input filter-input-city" value={city} onChange={(event) => { setCity(event.target.value); trackFilter("city"); }} data-testid="city-filter">
             <option value="">All cities</option>
             {uniqueCities().map((item) => <option key={item} value={item}>{item}</option>)}
           </select>
@@ -175,11 +184,11 @@ export function HomePage() {
 
         <div className="toolbar-row toolbar-row-toggles">
           <label className="toggle-filter">
-            <input type="checkbox" checked={plannedOnly} onChange={(event) => setPlannedOnly(event.target.checked)} data-testid="planned-filter" />
+            <input type="checkbox" checked={plannedOnly} onChange={(event) => { setPlannedOnly(event.target.checked); trackFilter("planned_only"); }} data-testid="planned-filter" />
             <span>Planned only</span>
           </label>
           <label className="toggle-filter">
-            <input type="checkbox" checked={visitedOnly} onChange={(event) => setVisitedOnly(event.target.checked)} data-testid="visited-filter" />
+            <input type="checkbox" checked={visitedOnly} onChange={(event) => { setVisitedOnly(event.target.checked); trackFilter("visited_only"); }} data-testid="visited-filter" />
             <span>Visited only</span>
           </label>
           {hasActiveFilters ? (

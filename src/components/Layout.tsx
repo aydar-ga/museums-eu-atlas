@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 
 type LayoutProps = {
@@ -22,6 +23,11 @@ export function Layout({ isPanelOpen, children }: LayoutProps) {
         <footer className="footer">
           <p>2026 Museums Atlas. All rights reserved</p>
           <p>Built with love by Amateur Art Connoisseur</p>
+          <p>
+            <Link href="/feedback" data-testid="footer-feedback-link">
+              Feedback or want more? Say hello
+            </Link>
+          </p>
         </footer>
       </div>
     </>

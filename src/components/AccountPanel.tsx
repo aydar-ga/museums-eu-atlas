@@ -6,6 +6,7 @@ import { syncProgressToServer } from "@/lib/progress-sync";
 import { createSavedRoute, deleteSavedRoute, fetchSavedRoutes } from "@/lib/routes-api";
 import { readPlanned, isSignedIn, readUserEmail, readVisited } from "@/lib/storage";
 import type { SavedRoute } from "@/types";
+import { trackEvent } from "../lib/product-events";
 
 type AccountPanelProps = {
   email?: string | null;
@@ -75,6 +76,7 @@ export function AccountPanel({ email, onSignInOpen, onLogout }: AccountPanelProp
 
     setRouteName("");
     setRouteMessage(`Saved route "${saved.name}".`);
+    trackEvent({ name: "route_saved", subject: "" });
     await refreshRoutes();
   }
 

@@ -10,7 +10,13 @@ export async function sendEmail(
       Authorization: `Bearer ${delivery.apiKey}`,
       "Content-Type": "application/json"
     },
-    body: JSON.stringify({ from: delivery.from, ...message }),
+    body: JSON.stringify({
+      from: delivery.from,
+      to: message.to,
+      subject: message.subject,
+      text: message.text,
+      ...(message.html ? { html: message.html } : {})
+    }),
     signal: AbortSignal.timeout(timeoutMs)
   });
   if (!response.ok) {
